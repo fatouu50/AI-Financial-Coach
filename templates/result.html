@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Résultat</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            padding: 40px;
+        }
+
+        .card {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .score {
+            font-size: 28px;
+            margin: 20px 0;
+        }
+
+        .recommendation {
+            background: #e8f0fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #2a5298;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Résultat de l'analyse</h2>
+
+    <p><strong>Banque :</strong> {{ bank }}</p>
+    <p><strong>Taux d'endettement :</strong> {{ debt_ratio }} %</p>
+    <p><strong>Capacité restante :</strong> {{ remaining }}</p>
+
+    <div class="score">
+        Score financier : {{ score }} / 100
+    </div>
+
+    <div class="recommendation">
+        {{ recommendation }}
+    </div>
+
+    <a href="/simulation">Faire une nouvelle simulation</a>
+</div>
+
+</body>
+</html>

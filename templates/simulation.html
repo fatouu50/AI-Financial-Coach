@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simulation</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            padding: 40px;
+        }
+
+        .card {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Simulation Financière</h2>
+
+    <form method="POST">
+
+        <label>Banque</label>
+        <select name="bank">
+            <option>Salaam Bank</option>
+            <option>CAC Bank</option>
+            <option>Saba Bank</option>
+        </select>
+
+        <label>Salaire mensuel</label>
+        <input type="number" name="salary" required>
+
+        <label>Épargne actuelle</label>
+        <input type="number" name="savings" required>
+
+        <label>Charges mensuelles</label>
+        <input type="number" name="expenses" required>
+
+        <button type="submit">Analyser</button>
+    </form>
+</div>
+
+</body>
+</html>
