@@ -159,7 +159,7 @@ gunicorn app:app --bind 0.0.0.0:5000 --workers 2 --threads 4
 ## Structure du projet
 
 ```
-ai-inclusive-finance/
+finance-ai/
 │
 ├── app.py                  # Point d'entrée Flask — routes et orchestration
 ├── ai_engine.py            # Moteur de scoring financier (5 composantes)
@@ -373,3 +373,4 @@ AI Inclusive Finance ne recommande pas des produits financiers. Il **protège** 
 ---
 
 *Construit pour le hackathon IA & Inclusion Économique · Djibouti 2025*
+
