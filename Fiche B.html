@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FICHE B — Architecture Technique</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0a0e1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .slide {
+    width: 960px;
+    background: linear-gradient(135deg, #0d1225 0%, #111827 60%, #0d1a2e 100%);
+    border: 1px solid rgba(99,179,237,0.15);
+    border-radius: 16px;
+    padding: 44px 52px 36px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 360px; height: 360px;
+    background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .slide::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 10%;
+    width: 400px; height: 200px;
+    background: radial-gradient(ellipse, rgba(56,189,248,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #818cf8;
+    border: 1px solid rgba(129,140,248,0.35);
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 900;
+    color: #f1f5f9;
+    line-height: 1.25;
+    max-width: 680px;
+    margin-bottom: 28px;
+  }
+  h1 span { color: #818cf8; }
+
+  .divider {
+    width: 48px;
+    height: 2px;
+    background: linear-gradient(90deg, #818cf8, transparent);
+    margin-bottom: 26px;
+  }
+
+  /* Main layout */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 24px;
+    margin-bottom: 20px;
+  }
+
+  /* Pipeline */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .pipe-block {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(129,140,248,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s;
+  }
+
+  .pipe-block.user {
+    border-color: rgba(56,189,248,0.4);
+    background: rgba(56,189,248,0.07);
+  }
+  .pipe-block.user .pipe-icon { color: #38bdf8; }
+  .pipe-block.user .pipe-label { color: #7dd3fc; }
+
+  .pipe-block.flask {
+    border-color: rgba(251,191,36,0.3);
+    background: rgba(251,191,36,0.05);
+  }
+  .pipe-block.flask .pipe-icon { color: #fbbf24; }
+  .pipe-block.flask .pipe-label { color: #fde68a; }
+
+  .pipe-block.ai {
+    border-color: rgba(129,140,248,0.4);
+    background: rgba(129,140,248,0.08);
+  }
+  .pipe-block.ai .pipe-icon { color: #818cf8; }
+  .pipe-block.ai .pipe-label { color: #c7d2fe; }
+
+  .pipe-block.sim {
+    border-color: rgba(52,211,153,0.3);
+    background: rgba(52,211,153,0.06);
+  }
+  .pipe-block.sim .pipe-icon { color: #34d399; }
+  .pipe-block.sim .pipe-label { color: #6ee7b7; }
+
+  .pipe-block.reco {
+    border-color: rgba(251,113,133,0.3);
+    background: rgba(251,113,133,0.06);
+  }
+  .pipe-block.reco .pipe-icon { color: #fb7185; }
+  .pipe-block.reco .pipe-label { color: #fda4af; }
+
+  .pipe-block.dash {
+    border-color: rgba(251,191,36,0.3);
+    background: rgba(251,191,36,0.05);
+  }
+  .pipe-block.dash .pipe-icon { color: #fbbf24; }
+  .pipe-block.dash .pipe-label { color: #fde68a; }
+
+  .pipe-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+  .pipe-label {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .pipe-arrow {
+    width: 2px;
+    height: 12px;
+    background: linear-gradient(to bottom, rgba(129,140,248,0.5), rgba(129,140,248,0.2));
+    position: relative;
+    margin: 0 auto;
+  }
+  .pipe-arrow::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid rgba(129,140,248,0.5);
+  }
+
+  /* Detail cards */
+  .details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, auto);
+    gap: 10px;
+  }
+
+  .detail-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+
+  .detail-card.constraints {
+    grid-column: 1 / -1;
+    background: rgba(129,140,248,0.05);
+    border-color: rgba(129,140,248,0.15);
+  }
+
+  .detail-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 8px;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .detail-title {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .detail-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .detail-card ul li {
+    font-size: 11.5px;
+    color: #94a3b8;
+    line-height: 1.45;
+    padding-left: 12px;
+    position: relative;
+  }
+
+  .detail-card ul li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: #475569;
+    font-weight: 700;
+  }
+
+  /* Constraints inline */
+  .constraints-list {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .cons-badge {
+    font-size: 11px;
+    color: #94a3b8;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 20px;
+    padding: 3px 11px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .cons-badge::before {
+    content: '✓';
+    color: #34d399;
+    font-size: 10px;
+  }
+
+  /* Key phrase */
+  .key-phrase {
+    background: linear-gradient(135deg, rgba(129,140,248,0.08), rgba(56,189,248,0.05));
+    border: 1px solid rgba(129,140,248,0.2);
+    border-left: 3px solid #818cf8;
+    border-radius: 8px;
+    padding: 13px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .key-phrase p {
+    font-size: 13px;
+    color: #e2e8f0;
+    line-height: 1.5;
+  }
+
+  .key-phrase strong { color: #818cf8; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="tag">Fiche B — Architecture Technique</div>
+
+  <h1>Une architecture <span>simple, explicable</span><br>et déployable rapidement.</h1>
+
+  <div class="divider"></div>
+
+  <div class="main-grid">
+
+    <!-- Pipeline diagram -->
+    <div class="pipeline">
+      <div class="pipe-block user">
+        <span class="pipe-icon">👤</span>
+        <div class="pipe-label">Utilisateur</div>
+      </div>
+      <div class="pipe-arrow"></div>
+      <div class="pipe-block flask">
+        <span class="pipe-icon">🌐</span>
+        <div class="pipe-label">Interface Web (Flask)</div>
+      </div>
+      <div class="pipe-arrow"></div>
+      <div class="pipe-block ai">
+        <span class="pipe-icon">🧠</span>
+        <div class="pipe-label">Moteur d'analyse IA</div>
+      </div>
+      <div class="pipe-arrow"></div>
+      <div class="pipe-block sim">
+        <span class="pipe-icon">📈</span>
+        <div class="pipe-label">Module de simulation financière</div>
+      </div>
+      <div class="pipe-arrow"></div>
+      <div class="pipe-block reco">
+        <span class="pipe-icon">💬</span>
+        <div class="pipe-label">Générateur de recommandations</div>
+      </div>
+      <div class="pipe-arrow"></div>
+      <div class="pipe-block dash">
+        <span class="pipe-icon">📊</span>
+        <div class="pipe-label">Dashboard interactif</div>
+      </div>
+    </div>
+
+    <!-- Detail cards -->
+    <div class="details">
+
+      <div class="detail-card">
+        <div class="detail-head">
+          <div class="dot" style="background:#fbbf24;"></div>
+          <div class="detail-title">Interface Web — Flask</div>
+        </div>
+        <ul>
+          <li>Collecte des données utilisateur</li>
+          <li>Navigation entre les étapes</li>
+          <li>Affichage des résultats en temps réel</li>
+        </ul>
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-head">
+          <div class="dot" style="background:#818cf8;"></div>
+          <div class="detail-title">Moteur IA</div>
+        </div>
+        <ul>
+          <li>Analyse revenu, dépenses et épargne</li>
+          <li>Calcule un score de stabilité financière</li>
+        </ul>
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-head">
+          <div class="dot" style="background:#34d399;"></div>
+          <div class="detail-title">Simulation</div>
+        </div>
+        <ul>
+          <li>Projection dans le temps</li>
+          <li>Test de scénarios (imprévu, baisse de revenu)</li>
+        </ul>
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-head">
+          <div class="dot" style="background:#fb7185;"></div>
+          <div class="detail-title">Recommandation</div>
+        </div>
+        <ul>
+          <li>Conseils personnalisés</li>
+          <li>Explications compréhensibles par l'utilisateur</li>
+        </ul>
+      </div>
+
+      <div class="detail-card constraints">
+        <div class="detail-head">
+          <div class="dot" style="background:#64748b;"></div>
+          <div class="detail-title">Contraintes assumées</div>
+        </div>
+        <div class="constraints-list">
+          <span class="cons-badge">Aucune connexion bancaire réelle</span>
+          <span class="cons-badge">Fonctionne avec peu de données</span>
+          <span class="cons-badge">Architecture légère et reproductible</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Key phrase -->
+  <div class="key-phrase">
+    <span style="font-size:18px;flex-shrink:0;">⚡</span>
+    <p>Une IA accessible, conçue pour <strong>fonctionner même dans des environnements à données limitées.</strong></p>
+  </div>
+
+</div>
+</body>
+</html>

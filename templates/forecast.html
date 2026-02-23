@@ -1,0 +1,1181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* ── DESIGN : Terminal financier sombre + accents or/rouge ── */
+    :root {
+        --crisis-red:    #e05c5c;
+        --crisis-bg:     rgba(224,92,92,.08);
+        --crisis-border: rgba(224,92,92,.3);
+        --safe-green:    #4caf92;
+        --warn-amber:    #e8a84a;
+        --chart-blue:    #4a9edd;
+    }
+
+    .forecast-page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 56px 48px 100px;
+        position: relative;
+    }
+
+    /* ── TOPBAR ── */
+    .fc-topbar {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 48px;
+        animation: fadeUp .5s var(--ease) .1s both;
+    }
+    .breadcrumb {
+        display: flex; align-items: center; gap: 10px;
+        font-family: var(--font-mono); font-size: 10px;
+        letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; transition: color .2s; }
+    .breadcrumb a:hover { color: var(--ink); }
+    .breadcrumb .sep { color: rgba(107,107,107,.3); }
+    .breadcrumb strong { color: var(--ink); }
+
+    .fc-mode-badge {
+        display: flex; align-items: center; gap: 8px;
+        font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+        letter-spacing: .18em; text-transform: uppercase;
+        background: var(--ink); color: var(--gold);
+        padding: 8px 18px; border-radius: 2px;
+    }
+    .fc-mode-badge .dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: var(--safe-green);
+        animation: pulse 2s ease-in-out infinite;
+    }
+    .fc-mode-badge.crisis-mode { background: var(--crisis-red); color: #fff; }
+    .fc-mode-badge.crisis-mode .dot { background: #fff; }
+
+    /* ── HERO GRID ── */
+    .fc-hero {
+        display: grid;
+        grid-template-columns: 1fr 420px;
+        gap: 24px;
+        margin-bottom: 28px;
+    }
+
+    /* ── SCORE CARD SOMBRE ── */
+    .fc-score-card {
+        background: var(--ink);
+        border-radius: 4px;
+        padding: 44px 48px;
+        position: relative; overflow: hidden;
+        animation: fadeUp .6s var(--ease) .2s both;
+        transition: all .6s var(--ease);
+    }
+    .fc-score-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--gold), var(--teal-light), var(--gold));
+        background-size: 200%; animation: shimmer 3s linear infinite;
+        transition: background .6s;
+    }
+    .fc-score-card.crisis::before {
+        background: linear-gradient(90deg, var(--crisis-red), #ff8888, var(--crisis-red));
+        background-size: 200%; animation: shimmer 1s linear infinite;
+    }
+
+    @keyframes shimmer { from { background-position: 200%; } to { background-position: -200%; } }
+
+    .fc-score-eyebrow {
+        font-family: var(--font-mono); font-size: 9px; letter-spacing: .2em;
+        text-transform: uppercase; color: rgba(253,252,250,.3); margin-bottom: 14px;
+    }
+    .fc-score-main {
+        display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px;
+    }
+    .fc-score-num {
+        font-family: var(--font-display); font-size: 100px; font-weight: 300;
+        line-height: 1; color: var(--white); transition: color .6s;
+    }
+    .fc-score-card.crisis .fc-score-num { color: var(--crisis-red); }
+    .fc-score-denom {
+        font-family: var(--font-mono); font-size: 14px;
+        color: rgba(253,252,250,.25); letter-spacing: .05em;
+    }
+    .fc-gauge-track {
+        height: 5px; background: rgba(255,255,255,.08);
+        border-radius: 3px; overflow: hidden; margin: 20px 0 16px;
+    }
+    .fc-gauge-fill {
+        height: 100%; border-radius: 3px;
+        background: linear-gradient(90deg, var(--gold), var(--teal-light));
+        transition: width 1.4s var(--ease), background .6s;
+    }
+    .fc-score-card.crisis .fc-gauge-fill {
+        background: linear-gradient(90deg, var(--crisis-red), #ff8888);
+    }
+    .fc-score-meta {
+        display: flex; gap: 28px;
+    }
+    .fc-meta-item { }
+    .fc-meta-val {
+        font-family: var(--font-display); font-size: 28px; font-weight: 300;
+        color: var(--white); line-height: 1; margin-bottom: 3px;
+        transition: color .6s;
+    }
+    .fc-score-card.crisis .fc-meta-val { color: rgba(255,150,150,.9); }
+    .fc-meta-lbl {
+        font-family: var(--font-mono); font-size: 8px; letter-spacing: .14em;
+        text-transform: uppercase; color: rgba(253,252,250,.3);
+    }
+
+    /* ── CRISIS BUTTON ── */
+    .fc-crisis-panel {
+        background: var(--white);
+        border: 1.5px solid rgba(200,169,110,.18);
+        border-radius: 4px; padding: 36px 32px;
+        display: flex; flex-direction: column; gap: 20px;
+        animation: fadeUp .6s var(--ease) .3s both;
+        transition: border-color .4s, background .4s;
+        position: relative; overflow: hidden;
+    }
+    .fc-crisis-panel::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0;
+        height: 3px; background: rgba(200,169,110,.3); transition: background .4s;
+    }
+    .fc-crisis-panel.active { border-color: var(--crisis-border); background: var(--crisis-bg); }
+    .fc-crisis-panel.active::before { background: var(--crisis-red); }
+
+    .fc-crisis-title {
+        font-family: var(--font-display); font-size: 22px; font-weight: 400;
+        color: var(--ink); line-height: 1.2;
+    }
+    .fc-crisis-sub {
+        font-family: var(--font-ui); font-size: 12px; line-height: 1.7;
+        color: var(--muted);
+    }
+
+    .btn-crisis {
+        width: 100%; padding: 18px;
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        background: var(--ink); color: var(--white);
+        border: none; border-radius: 2px; cursor: pointer;
+        font-family: var(--font-ui); font-size: 11px; font-weight: 700;
+        letter-spacing: .12em; text-transform: uppercase;
+        transition: background .3s, transform .2s var(--ease), box-shadow .3s;
+    }
+    .btn-crisis:hover { background: var(--crisis-red); transform: translateY(-2px); box-shadow: 0 10px 28px rgba(224,92,92,.3); }
+    .btn-crisis.active { background: var(--crisis-red); animation: crisisShake .4s var(--ease); }
+
+    @keyframes crisisShake {
+        0%,100% { transform: translateX(0); }
+        20% { transform: translateX(-4px); }
+        40% { transform: translateX(4px); }
+        60% { transform: translateX(-2px); }
+        80% { transform: translateX(2px); }
+    }
+
+    .btn-reset {
+        width: 100%; padding: 14px;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        background: transparent; color: var(--muted);
+        border: 1px solid rgba(200,169,110,.2); border-radius: 2px; cursor: pointer;
+        font-family: var(--font-ui); font-size: 10px; font-weight: 700;
+        letter-spacing: .1em; text-transform: uppercase;
+        transition: color .2s, border-color .2s;
+        display: none;
+    }
+    .btn-reset:hover { color: var(--ink); border-color: var(--gold); }
+    .btn-reset.visible { display: flex; }
+
+    /* Crisis impact items */
+    .crisis-impacts { display: flex; flex-direction: column; gap: 10px; display: none; }
+    .crisis-impacts.visible { display: flex; }
+    .crisis-impact-item {
+        display: flex; align-items: center; gap: 12px;
+        font-family: var(--font-mono); font-size: 10px;
+        letter-spacing: .05em; color: var(--crisis-red);
+        animation: fadeUp .4s var(--ease) both;
+    }
+    .crisis-impact-item:nth-child(1) { animation-delay: .05s; }
+    .crisis-impact-item:nth-child(2) { animation-delay: .1s; }
+    .crisis-impact-item:nth-child(3) { animation-delay: .15s; }
+    .crisis-impact-arrow { font-size: 14px; }
+
+    /* ── CHART SECTION ── */
+    .fc-chart-section {
+        background: var(--white);
+        border: 1px solid rgba(200,169,110,.15);
+        border-radius: 4px;
+        padding: 40px 44px;
+        margin-bottom: 28px;
+        animation: fadeUp .6s var(--ease) .4s both;
+        position: relative; overflow: hidden;
+    }
+    .fc-chart-header {
+        display: flex; align-items: flex-start;
+        justify-content: space-between; margin-bottom: 32px;
+    }
+    .fc-chart-title {
+        font-family: var(--font-display); font-size: 28px; font-weight: 300;
+        color: var(--ink); margin-bottom: 6px;
+    }
+    .fc-chart-sub {
+        font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--muted);
+    }
+    .fc-chart-legend {
+        display: flex; gap: 20px;
+    }
+    .legend-item {
+        display: flex; align-items: center; gap: 8px;
+        font-family: var(--font-mono); font-size: 9px;
+        letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+    }
+    .legend-dot { width: 10px; height: 3px; border-radius: 2px; }
+
+    /* Chart canvas */
+    .fc-chart-wrap { position: relative; height: 280px; }
+    canvas#forecastChart { width: 100% !important; }
+
+    /* Timeline labels */
+    .fc-timeline-labels {
+        display: flex; justify-content: space-between;
+        margin-top: 12px;
+        font-family: var(--font-mono); font-size: 9px;
+        letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+    }
+    .fc-timeline-label.highlight { color: var(--teal); font-weight: 500; }
+
+    /* ── MILESTONE STRIP ── */
+    .fc-milestones {
+        display: grid; grid-template-columns: repeat(4, 1fr);
+        gap: 2px; background: rgba(200,169,110,.1);
+        border-radius: 3px; overflow: hidden;
+        margin-bottom: 28px;
+        animation: fadeUp .6s var(--ease) .5s both;
+    }
+    .fc-milestone {
+        background: var(--white); padding: 28px 24px;
+        transition: background .2s; position: relative;
+    }
+    .fc-milestone:hover { background: var(--surface); }
+    .fc-milestone-period {
+        font-family: var(--font-mono); font-size: 8px; letter-spacing: .16em;
+        text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
+    }
+    .fc-milestone-val {
+        font-family: var(--font-display); font-size: 26px; font-weight: 300;
+        color: var(--ink); line-height: 1; margin-bottom: 4px;
+        transition: color .6s;
+    }
+    .fc-milestone.crisis-active .fc-milestone-val { color: var(--crisis-red); }
+    .fc-milestone-lbl {
+        font-family: var(--font-mono); font-size: 9px; letter-spacing: .08em;
+        color: var(--muted);
+    }
+    .fc-milestone-trend {
+        font-family: var(--font-mono); font-size: 9px; margin-top: 6px;
+        color: var(--safe-green);
+    }
+    .fc-milestone.crisis-active .fc-milestone-trend { color: var(--crisis-red); }
+
+    /* ── PLAN D'ASCENSION ── */
+    .fc-ascension {
+        background: var(--ink);
+        border-radius: 4px; padding: 44px 48px;
+        margin-bottom: 28px;
+        position: relative; overflow: hidden;
+        animation: fadeUp .6s var(--ease) .55s both;
+    }
+    .fc-ascension::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0;
+        height: 3px; background: linear-gradient(90deg, var(--gold), var(--safe-green));
+    }
+    .fc-ascension::after {
+        content: 'ASCENSION';
+        position: absolute; right: -10px; bottom: -25px;
+        font-family: var(--font-display); font-size: 110px; font-weight: 300;
+        color: rgba(255,255,255,.03); line-height: 1; pointer-events: none;
+    }
+    .fc-ascension-header {
+        display: flex; align-items: baseline; justify-content: space-between;
+        margin-bottom: 32px;
+    }
+    .fc-ascension-title {
+        font-family: var(--font-display); font-size: 32px; font-weight: 300;
+        color: var(--white); line-height: 1.2;
+    }
+    .fc-ascension-title em { font-style: italic; color: var(--gold); }
+    .fc-ascension-sub {
+        font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em;
+        text-transform: uppercase; color: rgba(253,252,250,.25);
+    }
+
+    .fc-objectives {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    }
+    .fc-objective {
+        background: rgba(255,255,255,.04);
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 3px; padding: 24px 20px;
+        transition: background .2s, border-color .2s;
+        cursor: default;
+    }
+    .fc-objective:hover {
+        background: rgba(255,255,255,.07);
+        border-color: rgba(200,169,110,.3);
+    }
+    .fc-obj-icon {
+        width: 32px; height: 32px; border-radius: 2px;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 14px;
+    }
+    .fc-obj-icon.gold { background: rgba(200,169,110,.15); color: var(--gold); }
+    .fc-obj-icon.green { background: rgba(76,175,146,.15); color: var(--safe-green); }
+    .fc-obj-icon.teal { background: rgba(15,76,92,.2); color: var(--teal-light); }
+
+    .fc-obj-label {
+        font-family: var(--font-mono); font-size: 8px; letter-spacing: .16em;
+        text-transform: uppercase; color: rgba(253,252,250,.3); margin-bottom: 8px;
+    }
+    .fc-obj-action {
+        font-family: var(--font-ui); font-size: 13px; line-height: 1.6;
+        color: rgba(253,252,250,.8); margin-bottom: 12px;
+    }
+    .fc-obj-result {
+        font-family: var(--font-display); font-size: 20px; font-weight: 300;
+        color: var(--gold); line-height: 1;
+    }
+    .fc-obj-horizon {
+        font-family: var(--font-mono); font-size: 9px; color: rgba(253,252,250,.3);
+        margin-top: 4px; letter-spacing: .08em;
+    }
+
+    /* ── IMPACT SCORE DURABLE ── */
+    .fc-impact-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr);
+        gap: 16px; margin-bottom: 28px;
+        animation: fadeUp .6s var(--ease) .6s both;
+    }
+    .fc-impact-card {
+        background: var(--white);
+        border: 1.5px solid rgba(200,169,110,.15);
+        border-radius: 3px; padding: 28px 24px;
+        position: relative; overflow: hidden;
+        transition: transform .3s var(--ease), box-shadow .3s;
+    }
+    .fc-impact-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(10,11,13,.08); }
+    .fc-impact-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0;
+        height: 3px; transform: scaleX(0); transform-origin: left;
+        transition: transform .4s var(--ease);
+    }
+    .fc-impact-card:hover::before { transform: scaleX(1); }
+    .fc-impact-card.eco::before { background: var(--safe-green); }
+    .fc-impact-card.agri::before { background: var(--warn-amber); }
+    .fc-impact-card.risk::before { background: var(--crisis-red); }
+
+    .fc-impact-icon { font-size: 28px; margin-bottom: 14px; }
+    .fc-impact-name {
+        font-family: var(--font-display); font-size: 20px; font-weight: 400;
+        color: var(--ink); margin-bottom: 6px;
+    }
+    .fc-impact-desc {
+        font-family: var(--font-ui); font-size: 12px; line-height: 1.7;
+        color: var(--muted); margin-bottom: 16px;
+    }
+    .fc-impact-score-row {
+        display: flex; align-items: center; gap: 12px;
+    }
+    .fc-impact-score-bar {
+        flex: 1; height: 4px; background: rgba(200,169,110,.12); border-radius: 2px; overflow: hidden;
+    }
+    .fc-impact-score-fill { height: 100%; border-radius: 2px; transition: width 1.2s var(--ease); }
+    .fc-impact-card.eco  .fc-impact-score-fill { background: var(--safe-green); }
+    .fc-impact-card.agri .fc-impact-score-fill { background: var(--warn-amber); }
+    .fc-impact-card.risk .fc-impact-score-fill { background: var(--crisis-red); }
+    .fc-impact-score-num {
+        font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+        color: var(--ink); white-space: nowrap;
+    }
+
+    /* ── ALERTE BOX ── */
+    .fc-alert {
+        border-radius: 3px; padding: 24px 28px;
+        display: flex; align-items: flex-start; gap: 16px;
+        margin-bottom: 16px;
+        animation: fadeUp .4s var(--ease) both;
+        display: none;
+    }
+    .fc-alert.visible { display: flex; }
+    .fc-alert.danger { background: var(--crisis-bg); border: 1px solid var(--crisis-border); }
+    .fc-alert.warning { background: rgba(232,168,74,.07); border: 1px solid rgba(232,168,74,.25); }
+    .fc-alert.safe { background: rgba(76,175,146,.07); border: 1px solid rgba(76,175,146,.2); }
+    .fc-alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+    .fc-alert-title {
+        font-family: var(--font-ui); font-size: 13px; font-weight: 700;
+        color: var(--ink); margin-bottom: 4px;
+    }
+    .fc-alert.danger .fc-alert-title { color: var(--crisis-red); }
+    .fc-alert-text {
+        font-family: var(--font-ui); font-size: 13px; line-height: 1.7;
+        color: var(--muted);
+    }
+
+    /* ── MESSAGE INCLUSIF ── */
+    .fc-inclusive {
+        background: linear-gradient(135deg, var(--teal), #0a3a48);
+        border-radius: 4px; padding: 40px 48px;
+        display: grid; grid-template-columns: 1fr auto;
+        gap: 32px; align-items: center;
+        margin-bottom: 28px;
+        animation: fadeUp .6s var(--ease) .7s both;
+        position: relative; overflow: hidden;
+    }
+    .fc-inclusive::after {
+        content: '🌍';
+        position: absolute; right: 160px; top: 50%;
+        transform: translateY(-50%);
+        font-size: 80px; opacity: .06;
+    }
+    .fc-inclusive-label {
+        font-family: var(--font-mono); font-size: 9px; letter-spacing: .2em;
+        text-transform: uppercase; color: rgba(253,252,250,.4); margin-bottom: 10px;
+    }
+    .fc-inclusive-title {
+        font-family: var(--font-display); font-size: 26px; font-weight: 300;
+        color: var(--white); line-height: 1.3; margin-bottom: 12px;
+    }
+    .fc-inclusive-title em { font-style: italic; color: var(--gold); }
+    .fc-inclusive-text {
+        font-family: var(--font-ui); font-size: 13px; line-height: 1.7;
+        color: rgba(253,252,250,.55);
+    }
+    .fc-inclusive-stat {
+        text-align: center; flex-shrink: 0;
+        background: rgba(255,255,255,.07); border-radius: 3px;
+        padding: 24px 32px; border: 1px solid rgba(255,255,255,.1);
+    }
+    .fc-inclusive-stat-num {
+        font-family: var(--font-display); font-size: 48px; font-weight: 300;
+        color: var(--gold); line-height: 1;
+    }
+    .fc-inclusive-stat-lbl {
+        font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em;
+        text-transform: uppercase; color: rgba(253,252,250,.4); margin-top: 8px;
+    }
+
+    /* ── CTA ── */
+    .fc-cta {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 32px 40px; background: var(--white);
+        border: 1px solid rgba(200,169,110,.18); border-radius: 3px;
+        animation: fadeUp .6s var(--ease) .8s both;
+    }
+    .fc-cta-title {
+        font-family: var(--font-display); font-size: 24px; font-weight: 300;
+        color: var(--ink); margin-bottom: 4px;
+    }
+    .fc-cta-sub { font-family: var(--font-ui); font-size: 13px; color: var(--muted); }
+    .fc-cta-actions { display: flex; gap: 12px; }
+
+    .btn-primary {
+        display: inline-flex; align-items: center; gap: 10px;
+        padding: 14px 28px; background: var(--ink); color: var(--white);
+        border: none; border-radius: 2px; cursor: pointer;
+        font-family: var(--font-ui); font-size: 11px; font-weight: 700;
+        letter-spacing: .12em; text-transform: uppercase; text-decoration: none;
+        transition: background .2s, transform .2s var(--ease), box-shadow .2s;
+    }
+    .btn-primary:hover { background: var(--teal); transform: translateY(-2px); box-shadow: 0 10px 28px rgba(15,76,92,.3); }
+
+    .btn-secondary {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 14px 24px; background: transparent; color: var(--muted);
+        border: 1.5px solid rgba(200,169,110,.25); border-radius: 2px;
+        cursor: pointer; font-family: var(--font-ui); font-size: 11px; font-weight: 700;
+        letter-spacing: .12em; text-transform: uppercase; text-decoration: none;
+        transition: border-color .2s, color .2s, transform .2s;
+    }
+    .btn-secondary:hover { color: var(--ink); border-color: var(--gold); transform: translateY(-2px); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(18px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+    @keyframes numberFlash {
+        0%   { color: var(--crisis-red); transform: scale(1.05); }
+        100% { color: inherit; transform: scale(1); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) {
+        .fc-hero { grid-template-columns: 1fr; }
+        .fc-objectives { grid-template-columns: 1fr 1fr; }
+        .fc-milestones { grid-template-columns: repeat(2, 1fr); }
+        .fc-impact-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+        .forecast-page { padding: 40px 20px 60px; }
+        .fc-objectives { grid-template-columns: 1fr; }
+        .fc-milestones { grid-template-columns: 1fr 1fr; }
+        .fc-impact-grid { grid-template-columns: 1fr; }
+        .fc-inclusive { grid-template-columns: 1fr; }
+        .fc-cta { flex-direction: column; gap: 20px; }
+    }
+</style>
+
+<!-- Chart.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<div class="forecast-page">
+
+    <!-- ── TOPBAR ── -->
+    <div class="fc-topbar">
+        <div class="breadcrumb">
+            <a href="/banks">Banque</a>
+            <span class="sep">/</span>
+            <a href="/banks">Situation</a>
+            <span class="sep">/</span>
+            <a href="/opportunities">Opportunités</a>
+            <span class="sep">/</span>
+            <strong>GPS Financier</strong>
+        </div>
+        <div class="fc-mode-badge" id="modeBadge">
+            <span class="dot"></span>
+            <span id="modeText">Mode normal · Projection 3 ans</span>
+        </div>
+    </div>
+
+    <!-- ── ALERTES DYNAMIQUES ── -->
+    <div id="alertZone"></div>
+
+    <!-- ── HERO GRID ── -->
+    <div class="fc-hero">
+
+        <!-- Score card -->
+        <div class="fc-score-card" id="scoreCard">
+            <div class="fc-score-eyebrow">Score d'inclusion financière · GPS prédictif</div>
+            <div class="fc-score-main">
+                <div class="fc-score-num" id="scoreDisplay">{{ data.score }}</div>
+                <div class="fc-score-denom">/ 1000</div>
+            </div>
+            <div class="fc-gauge-track">
+                <div class="fc-gauge-fill" id="gaugeFill"></div>
+            </div>
+            <div class="fc-score-meta">
+                <div class="fc-meta-item">
+                    <div class="fc-meta-val" id="metaSolde">
+                        {{ "{:+,.0f}".format(data.solde_net) }} FDJ
+                    </div>
+                    <div class="fc-meta-lbl">Solde mensuel</div>
+                </div>
+                <div class="fc-meta-item">
+                    <div class="fc-meta-val" id="metaEpargne">
+                        {{ data.taux_epargne }}%
+                    </div>
+                    <div class="fc-meta-lbl">Taux d'épargne</div>
+                </div>
+                <div class="fc-meta-item">
+                    <div class="fc-meta-val" id="metaSecurite">
+                        {{ data.mois_securite }} mois
+                    </div>
+                    <div class="fc-meta-lbl">Coussin sécurité</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crise panel -->
+        <div class="fc-crisis-panel" id="crisisPanel">
+            <div>
+                <div class="fc-crisis-title">🚨 Et si je perds<br>mon emploi ?</div>
+                <div class="fc-crisis-sub">
+                    Simulez une crise financière : baisse de revenus, hausse des dépenses, impact sur vos crédits. Voir votre résilience en temps réel.
+                </div>
+            </div>
+
+            <div class="crisis-impacts" id="crisisImpacts">
+                <div class="crisis-impact-item">
+                    <span class="crisis-impact-arrow">↓</span>
+                    <span id="crisisRevenuImpact">Revenu réduit de 60%</span>
+                </div>
+                <div class="crisis-impact-item">
+                    <span class="crisis-impact-arrow">↑</span>
+                    <span>Dépenses urgences +30%</span>
+                </div>
+                <div class="crisis-impact-item">
+                    <span class="crisis-impact-arrow">⚠</span>
+                    <span id="crisisCreditImpact">Capacité crédit effondrée</span>
+                </div>
+            </div>
+
+            <button class="btn-crisis" id="btnCrisis" onclick="toggleCrisis()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 2 V8 M8 11 V12"/>
+                    <circle cx="8" cy="8" r="6"/>
+                </svg>
+                Simuler la crise
+            </button>
+            <button class="btn-reset" id="btnReset" onclick="toggleCrisis()">
+                ↺ Retour à la situation normale
+            </button>
+        </div>
+    </div>
+
+    <!-- ── CHART SECTION ── -->
+    <div class="fc-chart-section">
+        <div class="fc-chart-header">
+            <div>
+                <div class="fc-chart-title">Trajectoire financière · 3 ans</div>
+                <div class="fc-chart-sub">Évolution du capital · inflation 4% · imprévus inclus</div>
+            </div>
+            <div class="fc-chart-legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--teal);"></div>
+                    <span>Capital projeté</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--gold);"></div>
+                    <span>Objectif</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background: var(--crisis-red); display: none;" id="legendCrisis"></div>
+                    <span id="legendCrisisText" style="display:none;">Scénario crise</span>
+                </div>
+            </div>
+        </div>
+        <div class="fc-chart-wrap">
+            <canvas id="forecastChart"></canvas>
+        </div>
+        <div class="fc-timeline-labels">
+            <span>Aujourd'hui</span>
+            <span>3 mois</span>
+            <span>6 mois</span>
+            <span class="fc-timeline-label highlight">1 an</span>
+            <span>18 mois</span>
+            <span>2 ans</span>
+            <span class="fc-timeline-label highlight">3 ans</span>
+        </div>
+    </div>
+
+    <!-- ── MILESTONES ── -->
+    <div class="fc-milestones" id="milestonesGrid">
+        <div class="fc-milestone" id="ms0">
+            <div class="fc-milestone-period">Aujourd'hui</div>
+            <div class="fc-milestone-val" id="ms0val">{{ "{:,.0f}".format(user.epargne) }} FDJ</div>
+            <div class="fc-milestone-lbl">Capital actuel</div>
+            <div class="fc-milestone-trend" id="ms0trend">↑ Point de départ</div>
+        </div>
+        <div class="fc-milestone" id="ms1">
+            <div class="fc-milestone-period">Dans 1 an</div>
+            <div class="fc-milestone-val" id="ms1val">—</div>
+            <div class="fc-milestone-lbl">Capital projeté</div>
+            <div class="fc-milestone-trend" id="ms1trend"></div>
+        </div>
+        <div class="fc-milestone" id="ms2">
+            <div class="fc-milestone-period">Dans 2 ans</div>
+            <div class="fc-milestone-val" id="ms2val">—</div>
+            <div class="fc-milestone-lbl">Capital projeté</div>
+            <div class="fc-milestone-trend" id="ms2trend"></div>
+        </div>
+        <div class="fc-milestone" id="ms3">
+            <div class="fc-milestone-period">Dans 3 ans</div>
+            <div class="fc-milestone-val" id="ms3val">—</div>
+            <div class="fc-milestone-lbl">Capital projeté</div>
+            <div class="fc-milestone-trend" id="ms3trend"></div>
+        </div>
+    </div>
+
+    <!-- ── PLAN D'ASCENSION ── -->
+    <div class="fc-ascension">
+        <div class="fc-ascension-header">
+            <div class="fc-ascension-title">
+                Plan d'<em>ascension</em><br>financière personnalisé
+            </div>
+            <div class="fc-ascension-sub">Micro-objectifs · IA inclusive</div>
+        </div>
+        <div class="fc-objectives" id="objectivesGrid">
+            <!-- rempli par JS -->
+        </div>
+    </div>
+
+    <!-- ── SCORE IMPACT DURABLE ── -->
+    <div style="margin-bottom: 12px; animation: fadeUp .6s var(--ease) .6s both;">
+        <div class="section-eyebrow">Score d'impact durable · Investissement responsable</div>
+    </div>
+    <div class="fc-impact-grid">
+        <div class="fc-impact-card eco">
+            <div class="fc-impact-icon">🏡</div>
+            <div class="fc-impact-name">Maison éco-énergétique</div>
+            <div class="fc-impact-desc">Logement solaire, isolation thermique, matériaux locaux. Réduction de facture jusqu'à 40% + valorisation du patrimoine.</div>
+            <div class="fc-impact-score-row">
+                <div class="fc-impact-score-bar">
+                    <div class="fc-impact-score-fill" style="width:0%" id="ecoBar"></div>
+                </div>
+                <div class="fc-impact-score-num">+++ Score</div>
+            </div>
+        </div>
+        <div class="fc-impact-card agri">
+            <div class="fc-impact-icon">🌿</div>
+            <div class="fc-impact-name">Terrain agricole local</div>
+            <div class="fc-impact-desc">Investissement dans la sécurité alimentaire de Djibouti. Soutien à la souveraineté, valorisation sur 10 ans.</div>
+            <div class="fc-impact-score-row">
+                <div class="fc-impact-score-bar">
+                    <div class="fc-impact-score-fill" style="width:0%" id="agriBar"></div>
+                </div>
+                <div class="fc-impact-score-num">++ Score</div>
+            </div>
+        </div>
+        <div class="fc-impact-card risk">
+            <div class="fc-impact-icon">⚠️</div>
+            <div class="fc-impact-name">Achat à risque élevé</div>
+            <div class="fc-impact-desc">Voiture de luxe, bien spéculatif, crédit dépassant 40% des revenus. Impact négatif sur le score de durabilité.</div>
+            <div class="fc-impact-score-row">
+                <div class="fc-impact-score-bar">
+                    <div class="fc-impact-score-fill" style="width:0%" id="riskBar"></div>
+                </div>
+                <div class="fc-impact-score-num">— Score</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MESSAGE IA INCLUSIVE ── -->
+    <div class="fc-inclusive">
+        <div>
+            <div class="fc-inclusive-label">IA inclusive · Corne de l'Afrique</div>
+            <div class="fc-inclusive-title">
+                Un GPS financier qui fonctionne<br><em>là où les données sont rares</em>
+            </div>
+            <div class="fc-inclusive-text">
+                Notre IA nécessite uniquement 3 données : salaire, dépenses, épargne. Pas de connexion bancaire, pas d'historique de crédit, pas de documents. Accessible à 100% des actifs de Djibouti — secteur formel et informel.
+            </div>
+        </div>
+        <div class="fc-inclusive-stat">
+            <div class="fc-inclusive-stat-num">3</div>
+            <div class="fc-inclusive-stat-lbl">données<br>suffisent</div>
+        </div>
+    </div>
+
+    <!-- ── CTA ── -->
+    <div class="fc-cta">
+        <div>
+            <div class="fc-cta-title">Nouvelle simulation</div>
+            <div class="fc-cta-sub">Mettez à jour votre profil pour recalculer votre GPS financier</div>
+        </div>
+        <div class="fc-cta-actions">
+            <a href="/banks" class="btn-primary">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h10M7 2l5 5-5 5"/></svg>
+                Nouvelle simulation
+            </a>
+            <a href="/opportunities" class="btn-secondary">← Opportunités</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ── DATA FROM FLASK ──────────────────────────────────────────
+const SCORE    = {{ data.score | int }};
+const SOLDE    = {{ data.solde_net | float }};
+const EPARGNE  = {{ user.epargne | float }};
+const DEPENSES = {{ user.depenses | float }};
+const REVENU   = {{ user.revenu | float }};
+const TAUX_EP  = {{ data.taux_epargne | float }};
+const MOIS_SEC = {{ data.mois_securite | float }};
+const CAP_EMP  = {{ data.capacite_emprunt | float }};
+
+const INFLATION = 0.04;   // 4% inflation annuelle Djibouti
+const IMPREVUS  = 0.05;   // 5% imprévus annuels
+
+let crisisMode = false;
+let chart = null;
+
+// ── FORMAT FDJ ───────────────────────────────────────────────
+function fmtFDJ(n) {
+    if (Math.abs(n) >= 1_000_000)
+        return (n / 1_000_000).toFixed(1) + 'M FDJ';
+    return Math.round(n).toLocaleString('fr-FR') + ' FDJ';
+}
+
+// ── PROJECTION DATA ──────────────────────────────────────────
+function buildProjection(crisis = false) {
+    const months = 37;
+    const labels = [];
+    const normal = [];
+    const objectif = [];
+
+    let capital   = EPARGNE;
+    let revenuM   = crisis ? REVENU * 0.4 : REVENU;    // crise = 60% perte revenu
+    let depensesM = crisis ? DEPENSES * 1.3 : DEPENSES; // crise = +30% dépenses
+
+    for (let m = 0; m <= months; m++) {
+        labels.push(m);
+
+        // Ajustement inflation mensuel
+        const inflMois = Math.pow(1 + INFLATION, m / 12);
+        const depActu  = depensesM * inflMois;
+
+        // Solde mensuel avec imprévus (aléatoire mais reproductible)
+        const imprevuChoc = m % 8 === 0 && m > 0 ? -depensesM * 0.3 : 0;
+        const soldeMois   = revenuM - depActu + imprevuChoc;
+
+        capital = Math.max(0, capital + soldeMois);
+        normal.push(Math.round(capital));
+
+        // Objectif : épargner 15% du revenu net systématiquement
+        const objCapital = EPARGNE + (REVENU * 0.15 * m);
+        objectif.push(Math.round(objCapital));
+    }
+
+    return { labels, normal, objectif };
+}
+
+// ── CHART ────────────────────────────────────────────────────
+function initChart() {
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    const proj = buildProjection(false);
+
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: proj.labels,
+            datasets: [
+                {
+                    label: 'Capital projeté',
+                    data: proj.normal,
+                    borderColor: 'rgba(15,76,92,1)',
+                    backgroundColor: 'rgba(15,76,92,.06)',
+                    borderWidth: 2.5,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: 'rgba(15,76,92,1)',
+                    fill: true,
+                    tension: 0.4,
+                },
+                {
+                    label: 'Objectif',
+                    data: proj.objectif,
+                    borderColor: 'rgba(200,169,110,.7)',
+                    backgroundColor: 'transparent',
+                    borderWidth: 1.5,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    fill: false,
+                    tension: 0.4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(10,11,13,.92)',
+                    padding: 14,
+                    titleColor: 'rgba(253,252,250,.4)',
+                    bodyColor: '#fdfcfa',
+                    titleFont: { family: 'DM Mono', size: 9 },
+                    bodyFont: { family: 'Cormorant Garamond', size: 16, weight: '300' },
+                    callbacks: {
+                        title: ctx => `Mois ${ctx[0].label}`,
+                        label: ctx => `${ctx.dataset.label} : ${fmtFDJ(ctx.raw)}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(200,169,110,.06)' },
+                    ticks: {
+                        font: { family: 'DM Mono', size: 9 },
+                        color: 'rgba(107,107,107,.5)',
+                        maxTicksLimit: 7,
+                        callback: v => v % 6 === 0 ? `M${v}` : ''
+                    },
+                    border: { color: 'rgba(200,169,110,.15)' }
+                },
+                y: {
+                    grid: { color: 'rgba(200,169,110,.06)' },
+                    ticks: {
+                        font: { family: 'DM Mono', size: 9 },
+                        color: 'rgba(107,107,107,.5)',
+                        callback: v => fmtFDJ(v)
+                    },
+                    border: { color: 'rgba(200,169,110,.15)' }
+                }
+            }
+        }
+    });
+}
+
+// ── MILESTONES ───────────────────────────────────────────────
+function updateMilestones(crisis = false) {
+    const proj = buildProjection(crisis);
+    const pts  = [0, 12, 24, 36];
+    const ids  = ['ms0', 'ms1', 'ms2', 'ms3'];
+
+    ids.forEach((id, i) => {
+        const m   = pts[i];
+        const val = proj.normal[m];
+        const el  = document.getElementById(id);
+        const valEl   = document.getElementById(id + 'val');
+        const trendEl = document.getElementById(id + 'trend');
+
+        valEl.textContent = fmtFDJ(val);
+
+        if (i > 0) {
+            const prev = proj.normal[pts[i-1]];
+            const diff = val - prev;
+            const pct  = prev > 0 ? ((diff/prev)*100).toFixed(0) : 0;
+            trendEl.textContent = crisis
+                ? `↓ ${Math.abs(pct)}% vs situation normale`
+                : (diff >= 0 ? `↑ +${Math.abs(pct)}% vs période précédente` : `↓ ${pct}%`);
+            trendEl.style.color = crisis ? 'var(--crisis-red)' : (diff >= 0 ? 'var(--safe-green)' : 'var(--crisis-red)');
+        }
+
+        el.classList.toggle('crisis-active', crisis && i > 0);
+    });
+}
+
+// ── CRISIS TOGGLE ────────────────────────────────────────────
+function toggleCrisis() {
+    crisisMode = !crisisMode;
+
+    const scoreCard  = document.getElementById('scoreCard');
+    const crisisPanel = document.getElementById('crisisPanel');
+    const btn        = document.getElementById('btnCrisis');
+    const btnReset   = document.getElementById('btnReset');
+    const badge      = document.getElementById('modeBadge');
+    const modeText   = document.getElementById('modeText');
+    const impacts    = document.getElementById('crisisImpacts');
+    const legendDot  = document.getElementById('legendCrisis');
+    const legendTxt  = document.getElementById('legendCrisisText');
+
+    if (crisisMode) {
+        // Activer crise
+        scoreCard.classList.add('crisis');
+        crisisPanel.classList.add('active');
+        btn.classList.add('active');
+        btn.textContent = '🚨 Mode crise actif';
+        btn.style.display = 'none';
+        btnReset.classList.add('visible');
+        badge.classList.add('crisis-mode');
+        modeText.textContent = '🚨 SIMULATION CRISE — Perte d\'emploi';
+        impacts.classList.add('visible');
+        legendDot.style.display = 'block';
+        legendTxt.style.display = 'block';
+
+        // Score en crise (-40%)
+        const crisisScore = Math.max(0, Math.round(SCORE * 0.45));
+        animateNumber('scoreDisplay', SCORE, crisisScore, 800);
+        document.getElementById('gaugeFill').style.width = (crisisScore / 10) + '%';
+
+        const crisisSolde = (REVENU * 0.4) - (DEPENSES * 1.3);
+        document.getElementById('metaSolde').textContent = fmtFDJ(crisisSolde);
+        document.getElementById('metaEpargne').textContent = crisisSolde > 0 ? (crisisSolde / (REVENU*0.4) * 100).toFixed(1) + '%' : '0%';
+        document.getElementById('metaSecurite').textContent = DEPENSES > 0 ? (EPARGNE / (DEPENSES * 1.3)).toFixed(1) + ' mois' : '—';
+
+        // Update chart avec dataset crise
+        const proj = buildProjection(true);
+        if (chart.data.datasets.length < 3) {
+            chart.data.datasets.push({
+                label: 'Scénario crise',
+                data: proj.normal,
+                borderColor: 'rgba(224,92,92,.9)',
+                backgroundColor: 'rgba(224,92,92,.04)',
+                borderWidth: 2,
+                pointRadius: 0,
+                fill: true,
+                tension: 0.4,
+                borderDash: [4, 3],
+            });
+        } else {
+            chart.data.datasets[2].data = proj.normal;
+        }
+        chart.update('active');
+
+        // Alertes
+        showAlerts(true);
+        updateMilestones(true);
+
+    } else {
+        // Reset
+        scoreCard.classList.remove('crisis');
+        crisisPanel.classList.remove('active');
+        btn.classList.remove('active');
+        btn.style.display = '';
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2 V8 M8 11 V12"/><circle cx="8" cy="8" r="6"/></svg> Simuler la crise`;
+        btnReset.classList.remove('visible');
+        badge.classList.remove('crisis-mode');
+        modeText.textContent = 'Mode normal · Projection 3 ans';
+        impacts.classList.remove('visible');
+        legendDot.style.display = 'none';
+        legendTxt.style.display = 'none';
+
+        animateNumber('scoreDisplay', Math.round(SCORE * 0.45), SCORE, 800);
+        document.getElementById('gaugeFill').style.width = (SCORE / 10) + '%';
+        document.getElementById('metaSolde').textContent = fmtFDJ(SOLDE);
+        document.getElementById('metaEpargne').textContent = TAUX_EP + '%';
+        document.getElementById('metaSecurite').textContent = MOIS_SEC + ' mois';
+
+        if (chart.data.datasets.length >= 3) {
+            chart.data.datasets.splice(2, 1);
+        }
+        chart.update('active');
+
+        showAlerts(false);
+        updateMilestones(false);
+    }
+}
+
+// ── ANIMATE NUMBER ───────────────────────────────────────────
+function animateNumber(id, from, to, duration) {
+    const el = document.getElementById(id);
+    const start = performance.now();
+    const range = to - from;
+    const step = ts => {
+        const progress = Math.min((ts - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.round(from + range * ease);
+        if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+}
+
+// ── ALERTS ───────────────────────────────────────────────────
+function showAlerts(crisis) {
+    const zone = document.getElementById('alertZone');
+    zone.innerHTML = '';
+
+    if (crisis) {
+        const crisisSolde = (REVENU * 0.4) - (DEPENSES * 1.3);
+        zone.innerHTML = `
+        <div class="fc-alert danger visible" style="margin-bottom:20px;">
+            <div class="fc-alert-icon">🚨</div>
+            <div>
+                <div class="fc-alert-title">Achat dangereux en mode crise</div>
+                <div class="fc-alert-text">
+                    Avec un solde mensuel de ${fmtFDJ(crisisSolde)}, tout engagement de crédit est déconseillé.
+                    Votre coussin de sécurité fondra en ${(EPARGNE / Math.abs(Math.min(crisisSolde, -1))).toFixed(1)} mois.
+                    Priorité absolue : stabiliser les revenus avant tout investissement.
+                </div>
+            </div>
+        </div>`;
+    } else if (SOLDE < 0) {
+        zone.innerHTML = `
+        <div class="fc-alert danger visible" style="margin-bottom:20px;">
+            <div class="fc-alert-icon">⚠️</div>
+            <div>
+                <div class="fc-alert-title">Déficit mensuel détecté — achat déconseillé</div>
+                <div class="fc-alert-text">Vos dépenses dépassent vos revenus. Aucun crédit immobilier ou automobile n'est recommandé dans cette situation.</div>
+            </div>
+        </div>`;
+    } else if (MOIS_SEC < 1) {
+        zone.innerHTML = `
+        <div class="fc-alert warning visible" style="margin-bottom:20px;">
+            <div class="fc-alert-icon">⚡</div>
+            <div>
+                <div class="fc-alert-title">Coussin de sécurité insuffisant</div>
+                <div class="fc-alert-text">Moins d'1 mois de réserve. Constituez un fonds d'urgence avant tout engagement financier.</div>
+            </div>
+        </div>`;
+    } else if (SCORE >= 550) {
+        zone.innerHTML = `
+        <div class="fc-alert safe visible" style="margin-bottom:20px;">
+            <div class="fc-alert-icon">✅</div>
+            <div>
+                <div class="fc-alert-title">Profil sain — conditions favorables à l'investissement</div>
+                <div class="fc-alert-text">Votre score de ${SCORE}/1000 et votre coussin de ${MOIS_SEC} mois vous qualifient pour les principaux produits financiers du marché djiboutien.</div>
+            </div>
+        </div>`;
+    }
+}
+
+// ── PLAN D'ASCENSION ─────────────────────────────────────────
+function buildAscension() {
+    const soldeMensuel   = Math.max(0, SOLDE);
+    const economieCafe   = 1500 * 2 * 4; // 2 cafés/sem × 4 sem = 12 000 FDJ/mois
+    const objetMaison    = 5_000_000;
+    const objetVoiture   = 2_700_000;
+
+    // Mois pour apport maison (20%)
+    const apportMaison   = objetMaison * 0.20;
+    const moisMaison     = soldeMensuel > 0 ? Math.ceil(apportMaison / (soldeMensuel * 0.8)) : 999;
+    const moisCafe       = economieCafe > 0 ? Math.ceil(apportMaison / (soldeMensuel + economieCafe)) : 999;
+
+    // Mois pour véhicule
+    const moisVoiture    = soldeMensuel > 0 ? Math.ceil(objetVoiture * 0.3 / (soldeMensuel * 0.5)) : 999;
+
+    const fmtMois = m => m > 60 ? '+5 ans' : m > 24 ? Math.ceil(m/12) + ' ans' : m + ' mois';
+
+    const objectives = [
+        {
+            icon: '☕', iconClass: 'gold',
+            label: 'Micro-économie',
+            action: `En économisant 2 cafés par semaine (${(economieCafe).toLocaleString('fr-FR')} FDJ/mois), vous constituez votre apport immobilier`,
+            result: `Apport 20% en ${fmtMois(moisCafe)}`,
+            horizon: `${moisCafe} mois · ${(economieCafe).toLocaleString('fr-FR')} FDJ/mois`
+        },
+        {
+            icon: '📊', iconClass: 'green',
+            label: 'Plan épargne progressif',
+            action: `Épargnez 10% puis 15% puis 20% de vos revenus sur 3 trimestres. Méthode "pay yourself first" adaptée à Djibouti`,
+            result: `+${fmtFDJ(REVENU * 0.15 * 12)} en 12 mois`,
+            horizon: `Objectif : ${fmtFDJ(REVENU * 0.20)} / mois dès M9`
+        },
+        {
+            icon: '🏠', iconClass: 'teal',
+            label: 'Accès immobilier',
+            action: `Avec votre solde actuel, vous pouvez constituer un apport pour un F3 à Balbala (5M FDJ). Objectif réaliste et local`,
+            result: `Apport (20%) = 1M FDJ`,
+            horizon: `Accessible en ${fmtMois(moisMaison)}`
+        }
+    ];
+
+    const grid = document.getElementById('objectivesGrid');
+    grid.innerHTML = objectives.map(o => `
+        <div class="fc-objective">
+            <div class="fc-obj-icon ${o.iconClass}">
+                <span style="font-size:18px;">${o.icon}</span>
+            </div>
+            <div class="fc-obj-label">${o.label}</div>
+            <div class="fc-obj-action">${o.action}</div>
+            <div class="fc-obj-result">${o.result}</div>
+            <div class="fc-obj-horizon">${o.horizon}</div>
+        </div>
+    `).join('');
+}
+
+// ── IMPACT BARS ──────────────────────────────────────────────
+function animateImpactBars() {
+    setTimeout(() => {
+        document.getElementById('ecoBar').style.width  = '88%';
+        document.getElementById('agriBar').style.width = '72%';
+        document.getElementById('riskBar').style.width = '28%';
+    }, 800);
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+    // Gauge
+    setTimeout(() => {
+        document.getElementById('gaugeFill').style.width = (SCORE / 10) + '%';
+    }, 300);
+
+    // Chart
+    initChart();
+
+    // Milestones
+    updateMilestones(false);
+
+    // Ascension
+    buildAscension();
+
+    // Impact bars
+    animateImpactBars();
+
+    // Alerts
+    showAlerts(false);
+});
+</script>
+
+{% endblock %}

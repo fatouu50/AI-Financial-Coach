@@ -1,0 +1,25 @@
+Bonjour,
+
+Aujourd’hui, des millions de personnes prennent les décisions financières les plus importantes de leur vie sans jamais avoir accès à un conseiller. Elles choisissent d’acheter, d’emprunter ou d’investir sans savoir si leur futur financier restera stable. Le problème n’est pas le manque d’argent. Le problème est le manque de visibilité.
+
+Nous sommes partis d’une question très simple :
+comment permettre à n’importe qui, avec seulement son salaire et ses dépenses, de savoir si une décision financière est sûre avant qu’elle ne devienne une erreur ?
+
+Notre solution est un coach financier basé sur l’intelligence artificielle, conçu pour fonctionner même sans données bancaires complexes. L’utilisateur entre quelques informations simples. L’IA analyse sa stabilité financière, simule son avenir et transforme des chiffres abstraits en décisions concrètes.
+
+Mais surtout, notre application fait quelque chose que les outils actuels ne font pas : elle montre les conséquences.
+Que se passe-t-il dans un an si vous achetez maintenant ?
+Que se passe-t-il si vos revenus baissent ?
+Combien de temps avant que cet investissement devienne réellement sûr ?
+
+Nous avons volontairement construit une IA inclusive, capable de fonctionner dans des contextes où les données sont limitées, afin de rendre le conseil financier accessible à ceux qui en sont aujourd’hui exclus.
+
+Ce projet n’est pas seulement technologique. Il est social.
+Il transforme l’intelligence artificielle en outil d’autonomie économique.
+
+Notre ambition est simple : passer d’un monde où l’on décide avec l’incertitude, à un monde où chacun peut anticiper son avenir financier avant d’agir.
+
+Aujourd’hui, nous ne présentons pas seulement une application.
+Nous présentons un nouveau réflexe : ne plus deviner son futur financier, mais le comprendre.
+
+Merci.

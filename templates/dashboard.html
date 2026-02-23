@@ -1,0 +1,1058 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* ─── LAYOUT ─────────────────────────────────────────────── */
+    .sim-layout {
+        display: grid;
+        grid-template-columns: 480px 1fr;
+        min-height: calc(100vh - var(--nav-h) - 32px);
+        max-width: 1440px;
+        margin: 0 auto;
+    }
+
+    /* ─── LEFT PANEL — FORM ──────────────────────────────────── */
+    .sim-panel {
+        background: var(--white);
+        border-right: 1px solid rgba(200, 169, 110, .18);
+        padding: 56px 48px;
+        position: sticky;
+        top: calc(var(--nav-h) + 32px);
+        height: calc(100vh - var(--nav-h) - 32px);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        scrollbar-width: thin;
+        scrollbar-color: var(--gold) transparent;
+    }
+
+    .sim-panel-header {
+        margin-bottom: 44px;
+        animation: fadeUp .5s var(--ease) .1s both;
+    }
+
+    .sim-panel-title {
+        font-family: var(--font-display);
+        font-size: 38px;
+        font-weight: 300;
+        line-height: 1.1;
+        color: var(--ink);
+        margin-top: 14px;
+    }
+
+    .sim-panel-title em {
+        font-style: italic;
+        color: var(--teal);
+    }
+
+    /* ─── FORM ───────────────────────────────────────────────── */
+    .sim-form { display: flex; flex-direction: column; gap: 0; flex: 1; }
+
+    .form-section {
+        border-bottom: 1px solid rgba(200, 169, 110, .12);
+        padding-bottom: 32px;
+        margin-bottom: 32px;
+        animation: fadeUp .5s var(--ease) both;
+    }
+
+    .form-section:nth-child(1) { animation-delay: .15s; }
+    .form-section:nth-child(2) { animation-delay: .25s; }
+    .form-section:nth-child(3) { animation-delay: .35s; }
+    .form-section:nth-child(4) { animation-delay: .45s; }
+
+    .form-section-label {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: .2em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-section-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(200, 169, 110, .2);
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+        position: relative;
+    }
+
+    .form-group:last-child { margin-bottom: 0; }
+
+    .form-label {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 8px;
+        transition: color .2s;
+    }
+
+    .form-group:focus-within .form-label { color: var(--teal); }
+
+    .form-input-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .form-prefix {
+        position: absolute;
+        left: 16px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        pointer-events: none;
+        transition: color .2s;
+        z-index: 1;
+    }
+
+    .form-suffix {
+        position: absolute;
+        right: 16px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: .08em;
+        color: var(--muted);
+        pointer-events: none;
+        transition: color .2s;
+    }
+
+    .form-group:focus-within .form-prefix,
+    .form-group:focus-within .form-suffix { color: var(--teal); }
+
+    .form-input {
+        width: 100%;
+        padding: 14px 52px 14px 56px;
+        font-family: var(--font-display);
+        font-size: 22px;
+        font-weight: 300;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1.5px solid rgba(200, 169, 110, .2);
+        border-radius: 2px;
+        outline: none;
+        transition: border-color .2s var(--ease), background .2s var(--ease), box-shadow .2s var(--ease);
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    .form-input::-webkit-outer-spin-button,
+    .form-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    .form-input::placeholder { color: rgba(107,107,107,.3); }
+
+    .form-input:focus {
+        border-color: var(--teal);
+        background: var(--white);
+        box-shadow: 0 0 0 4px rgba(15, 76, 92, .06);
+    }
+
+    .form-input:not(:placeholder-shown):valid {
+        border-color: rgba(76, 175, 146, .4);
+    }
+
+    .form-hint {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .08em;
+        color: var(--muted);
+        margin-top: 6px;
+        padding-left: 2px;
+    }
+
+    /* ─── SLIDER INPUT ───────────────────────────────────────── */
+    .form-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--teal) var(--pct, 50%), rgba(200,169,110,.2) var(--pct, 50%));
+        border-radius: 2px;
+        outline: none;
+        margin-top: 12px;
+        cursor: pointer;
+    }
+
+    .form-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        background: var(--white);
+        border: 2px solid var(--teal);
+        box-shadow: 0 2px 8px rgba(15,76,92,.2);
+        cursor: grab;
+        transition: transform .2s var(--ease), box-shadow .2s;
+    }
+
+    .form-slider::-webkit-slider-thumb:active {
+        cursor: grabbing;
+        transform: scale(1.2);
+        box-shadow: 0 4px 16px rgba(15,76,92,.3);
+    }
+
+    .slider-labels {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .08em;
+        color: var(--muted);
+        margin-top: 6px;
+    }
+
+    /* ─── SELECT ─────────────────────────────────────────────── */
+    .form-select {
+        width: 100%;
+        padding: 14px 16px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 400;
+        letter-spacing: .05em;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1.5px solid rgba(200, 169, 110, .2);
+        border-radius: 2px;
+        outline: none;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b6b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+    .form-select:focus {
+        border-color: var(--teal);
+        box-shadow: 0 0 0 4px rgba(15, 76, 92, .06);
+    }
+
+    /* ─── SUBMIT ─────────────────────────────────────────────── */
+    .form-submit-wrap {
+        margin-top: auto;
+        padding-top: 32px;
+        animation: fadeUp .5s var(--ease) .5s both;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 18px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--ink);
+        color: var(--white);
+        border: none;
+        border-radius: 2px;
+        cursor: pointer;
+        font-family: var(--font-ui);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        transition: background .25s var(--ease), transform .2s var(--ease), box-shadow .25s var(--ease);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-submit::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, var(--teal), transparent 60%);
+        opacity: 0;
+        transition: opacity .3s;
+    }
+
+    .btn-submit:hover {
+        background: var(--teal);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(15, 76, 92, .3);
+    }
+
+    .btn-submit:hover::before { opacity: .3; }
+
+    .btn-submit:active { transform: translateY(0); }
+
+    .btn-submit-icon {
+        width: 20px; height: 20px;
+        transition: transform .3s var(--ease);
+        position: relative;
+        z-index: 1;
+    }
+
+    .btn-submit:hover .btn-submit-icon { transform: translateX(4px); }
+
+    .btn-submit span { position: relative; z-index: 1; }
+
+    .btn-submit-loading {
+        display: none;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .spinner {
+        width: 16px; height: 16px;
+        border: 2px solid rgba(255,255,255,.3);
+        border-top-color: var(--white);
+        border-radius: 50%;
+        animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .form-submit-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .1em;
+        color: var(--muted);
+        justify-content: center;
+    }
+
+    .form-submit-meta svg { color: #4caf92; }
+
+    /* ─── RIGHT PANEL — PREVIEW ──────────────────────────────── */
+    .sim-preview {
+        padding: 56px 56px 56px 64px;
+        background: var(--surface);
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .preview-header {
+        animation: fadeUp .5s var(--ease) .2s both;
+    }
+
+    .preview-title {
+        font-family: var(--font-display);
+        font-size: 28px;
+        font-weight: 300;
+        color: var(--ink);
+        margin-top: 10px;
+    }
+
+    /* ─── SCORE PREVIEW ──────────────────────────────────────── */
+    .score-preview {
+        background: var(--ink);
+        border-radius: 3px;
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+        animation: fadeUp .5s var(--ease) .3s both;
+    }
+
+    .score-preview::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--gold), var(--teal));
+    }
+
+    .score-preview-label {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        color: rgba(253,252,250,.35);
+        margin-bottom: 20px;
+    }
+
+    .score-big {
+        font-family: var(--font-display);
+        font-size: 96px;
+        font-weight: 300;
+        line-height: 1;
+        color: var(--white);
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .score-big span {
+        font-family: var(--font-mono);
+        font-size: 14px;
+        color: rgba(253,252,250,.3);
+        font-weight: 400;
+        letter-spacing: .05em;
+    }
+
+    .score-gauge {
+        position: relative;
+        height: 6px;
+        background: rgba(255,255,255,.08);
+        border-radius: 3px;
+        overflow: hidden;
+        margin: 20px 0;
+    }
+
+    .score-gauge-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, var(--gold), var(--teal-light));
+        transition: width 1.2s var(--ease);
+    }
+
+    .score-gauge-ticks {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--font-mono);
+        font-size: 8px;
+        letter-spacing: .08em;
+        color: rgba(253,252,250,.2);
+        margin-top: 6px;
+    }
+
+    .score-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--gold);
+        background: rgba(200, 169, 110, .1);
+        padding: 6px 14px;
+        border-radius: 2px;
+        margin-top: 16px;
+        border: 1px solid rgba(200, 169, 110, .2);
+    }
+
+    .score-status::before {
+        content: '';
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--gold);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* ─── METRICS GRID ───────────────────────────────────────── */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+        background: rgba(200, 169, 110, .12);
+        border-radius: 3px;
+        overflow: hidden;
+        animation: fadeUp .5s var(--ease) .4s both;
+    }
+
+    .metric-cell {
+        background: var(--white);
+        padding: 28px;
+        transition: background .2s var(--ease);
+        position: relative;
+    }
+
+    .metric-cell::before {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 2px;
+        transform: scaleX(0);
+        transform-origin: left;
+        background: var(--teal);
+        transition: transform .3s var(--ease);
+    }
+
+    .metric-cell:hover { background: var(--surface); }
+    .metric-cell:hover::before { transform: scaleX(1); }
+
+    .metric-cell-icon {
+        width: 20px; height: 20px;
+        color: var(--teal);
+        margin-bottom: 16px;
+        opacity: .7;
+    }
+
+    .metric-cell-val {
+        font-family: var(--font-display);
+        font-size: 34px;
+        font-weight: 300;
+        color: var(--ink);
+        line-height: 1;
+        margin-bottom: 6px;
+        transition: color .3s;
+    }
+
+    .metric-cell:hover .metric-cell-val { color: var(--teal); }
+
+    .metric-cell-lbl {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .metric-cell-trend {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: #4caf92;
+        margin-top: 4px;
+    }
+
+    /* ─── AI INSIGHT CARD ────────────────────────────────────── */
+    .insight-card {
+        background: var(--white);
+        border: 1px solid rgba(200, 169, 110, .18);
+        border-radius: 3px;
+        padding: 32px;
+        animation: fadeUp .5s var(--ease) .5s both;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .insight-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 3px;
+        height: 100%;
+        background: linear-gradient(to bottom, var(--gold), var(--teal));
+    }
+
+    .insight-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .insight-ai-badge {
+        font-family: var(--font-mono);
+        font-size: 8px;
+        font-weight: 500;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        background: var(--ink);
+        color: var(--gold);
+        padding: 4px 10px;
+        border-radius: 2px;
+    }
+
+    .insight-title {
+        font-family: var(--font-ui);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .insight-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .insight-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-family: var(--font-ui);
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--ink);
+    }
+
+    .insight-item::before {
+        content: '';
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--gold);
+        flex-shrink: 0;
+        margin-top: 6px;
+    }
+
+    .insight-item.positive::before { background: #4caf92; }
+    .insight-item.warning::before  { background: #e8a84a; }
+
+    /* ─── ODD ALIGNMENT ──────────────────────────────────────── */
+    .odd-row {
+        display: flex;
+        gap: 8px;
+        animation: fadeUp .5s var(--ease) .6s both;
+    }
+
+    .odd-pill {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: .1em;
+        padding: 6px 14px;
+        border-radius: 2px;
+        background: var(--white);
+        border: 1px solid rgba(200, 169, 110, .2);
+        color: var(--muted);
+        transition: background .2s, color .2s, border-color .2s;
+        cursor: default;
+    }
+
+    .odd-pill.active {
+        background: var(--teal);
+        color: var(--white);
+        border-color: var(--teal);
+    }
+
+    .odd-pill.active-gold {
+        background: var(--gold);
+        color: var(--white);
+        border-color: var(--gold);
+    }
+
+    /* ─── EMPTY STATE ────────────────────────────────────────── */
+    .preview-empty {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 16px;
+        padding: 60px;
+        border: 1.5px dashed rgba(200, 169, 110, .25);
+        border-radius: 3px;
+        animation: fadeUp .5s var(--ease) .3s both;
+    }
+
+    .preview-empty-icon {
+        width: 56px; height: 56px;
+        color: rgba(200, 169, 110, .3);
+    }
+
+    .preview-empty-title {
+        font-family: var(--font-display);
+        font-size: 24px;
+        font-weight: 300;
+        color: var(--muted);
+    }
+
+    .preview-empty-sub {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: .1em;
+        color: rgba(107,107,107,.5);
+        text-transform: uppercase;
+    }
+
+    /* ─── ANIMATIONS ─────────────────────────────────────────── */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%       { opacity: .4; transform: scale(.7); }
+    }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+        .sim-layout {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto;
+        }
+        .sim-panel {
+            position: static;
+            height: auto;
+            padding: 40px 24px;
+        }
+        .sim-preview {
+            padding: 40px 24px;
+        }
+    }
+</style>
+
+<div class="sim-layout">
+
+    <!-- ════════════════════════════════════════════════════════
+         LEFT — FORM PANEL
+    ═══════════════════════════════════════════════════════════ -->
+    <aside class="sim-panel">
+
+        <div class="sim-panel-header">
+            <div class="section-eyebrow">Étape 2 sur 3</div>
+            <h1 class="sim-panel-title">
+                Votre analyse<br><em>financière</em>
+            </h1>
+        </div>
+
+        <form class="sim-form" action="/opportunities" method="POST" id="simForm" novalidate>
+            <!-- Banque passée depuis l'étape 1 -->
+            <input type="hidden" name="banque" id="banqueHidden" value="{{ request.args.get('banque', '') }}">
+
+            <!-- ── REVENUS ── -->
+            <div class="form-section">
+                <div class="form-section-label">Revenus</div>
+
+                <div class="form-group">
+                    <label class="form-label" for="revenu">Revenu mensuel net</label>
+                    <div class="form-input-wrap">
+                        <span class="form-prefix">DJF</span>
+                        <input class="form-input" type="number" id="revenu" name="revenu"
+                               placeholder="0" min="0" step="50" required
+                               oninput="updatePreview()">
+                        <span class="form-suffix">/ mois</span>
+                    </div>
+                    <div class="form-hint">Salaire, allocations, revenus informels inclus</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="autres_revenus">Autres revenus (optionnel)</label>
+                    <div class="form-input-wrap">
+                        <span class="form-prefix">DJF</span>
+                        <input class="form-input" type="number" id="autres_revenus" name="autres_revenus"
+                               placeholder="0" min="0" step="10"
+                               oninput="updatePreview()">
+                        <span class="form-suffix">/ mois</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── DÉPENSES ── -->
+            <div class="form-section">
+                <div class="form-section-label">Charges & Dépenses</div>
+
+                <div class="form-group">
+                    <label class="form-label" for="depenses">Dépenses mensuelles totales</label>
+                    <div class="form-input-wrap">
+                        <span class="form-prefix">DJF</span>
+                        <input class="form-input" type="number" id="depenses" name="depenses"
+                               placeholder="0" min="0" step="50" required
+                               oninput="updatePreview()">
+                        <span class="form-suffix">/ mois</span>
+                    </div>
+                    <div class="form-hint">Loyer, nourriture, transport, charges fixes</div>
+                </div>
+            </div>
+
+            <!-- ── ÉPARGNE ── -->
+            <div class="form-section">
+                <div class="form-section-label">Patrimoine & Épargne</div>
+
+                <div class="form-group">
+                    <label class="form-label" for="epargne">Épargne actuelle</label>
+                    <div class="form-input-wrap">
+                        <span class="form-prefix">DJF</span>
+                        <input class="form-input" type="number" id="epargne" name="epargne"
+                               placeholder="0" min="0" step="100" required
+                               oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="objectif">Objectif d'épargne mensuel</label>
+                    <div class="form-input-wrap" style="flex-direction: column; align-items: stretch; gap: 0;">
+                        <input class="form-slider" type="range" id="objectif" name="objectif"
+                               min="0" max="500" step="10" value="100"
+                               oninput="updateSlider(this); updatePreview()">
+                        <div class="slider-labels">
+                            <span>DJF 0</span>
+                            <span id="sliderVal" style="color: var(--teal); font-weight:500;">DJF 100 / mois</span>
+                            <span>DJF 500</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── CONTEXTE ── -->
+            <div class="form-section" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                <div class="form-section-label">Contexte</div>
+
+                <div class="form-group">
+                    <label class="form-label" for="situation">Situation professionnelle</label>
+                    <select class="form-select" id="situation" name="situation" onchange="updatePreview()">
+                        <option value="">Sélectionner…</option>
+                        <option value="salarie">Salarié(e)</option>
+                        <option value="independant">Travailleur indépendant</option>
+                        <option value="informel">Secteur informel</option>
+                        <option value="entrepreneur">Entrepreneur / PME</option>
+                        <option value="etudiant">Étudiant(e)</option>
+                        <option value="sans_emploi">Sans emploi</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="pays">Pays de résidence</label>
+                    <select class="form-select" id="pays" name="pays" onchange="updatePreview()">
+                        <option value="">Sélectionner…</option>
+                        <option value="sn">🇸🇳 Sénégal</option>
+                        <option value="ci">🇨🇮 Côte d'Ivoire</option>
+                        <option value="gh">🇬🇭 Ghana</option>
+                        <option value="tn">🇹🇳 Tunisie</option>
+                        <option value="ma">🇲🇦 Maroc</option>
+                        <option value="dj">🇩🇯 Djibouti</option>
+                        <option value="other">🌍 Autre</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ── SUBMIT ── -->
+            <div class="form-submit-wrap">
+                <button class="btn-submit" type="submit" id="submitBtn">
+                    <span>Analyser avec l'IA</span>
+                    <svg class="btn-submit-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 10h12M11 5l5 5-5 5"/>
+                    </svg>
+                </button>
+                <div class="form-submit-meta">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M5 1 L5 5 M5 5 C3 5 1 6.5 1 8.5 H9 C9 6.5 7 5 5 5"/>
+                        <circle cx="5" cy="3" r="1.5" fill="currentColor"/>
+                    </svg>
+                    Données chiffrées uniquement — aucune donnée personnelle stockée
+                </div>
+            </div>
+
+        </form>
+    </aside>
+
+    <!-- ════════════════════════════════════════════════════════
+         RIGHT — LIVE PREVIEW PANEL
+    ═══════════════════════════════════════════════════════════ -->
+    <main class="sim-preview" id="previewPanel">
+
+        <div class="preview-header">
+            <div class="section-eyebrow">Aperçu temps réel</div>
+            <h2 class="preview-title">Votre tableau de bord</h2>
+        </div>
+
+        <!-- Score card -->
+        <div class="score-preview">
+            <div class="score-preview-label">Score d'Inclusion Financière</div>
+            <div class="score-big" id="scoreBig">
+                —
+                <span id="scoreMax">/ 1000</span>
+            </div>
+            <div class="score-gauge">
+                <div class="score-gauge-fill" id="scoreFill"></div>
+            </div>
+            <div class="score-gauge-ticks">
+                <span>0</span><span>250</span><span>500</span><span>750</span><span>1000</span>
+            </div>
+            <div class="score-status" id="scoreStatus">En attente de données</div>
+        </div>
+
+        <!-- Metrics grid -->
+        <div class="metrics-grid">
+            <div class="metric-cell">
+                <svg class="metric-cell-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 17 L7 11 L11 13 L17 5"/>
+                </svg>
+                <div class="metric-cell-val" id="mTauxEpargne">—</div>
+                <div class="metric-cell-lbl">Taux d'épargne</div>
+                <div class="metric-cell-trend" id="mTauxEpargneTrend"></div>
+            </div>
+            <div class="metric-cell">
+                <svg class="metric-cell-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="5" width="14" height="11" rx="1"/>
+                    <path d="M7 5V3h6v2"/>
+                </svg>
+                <div class="metric-cell-val" id="mCapaciteCredit">—</div>
+                <div class="metric-cell-lbl">Capacité crédit estimée</div>
+                <div class="metric-cell-trend" id="mCapaciteCreditTrend"></div>
+            </div>
+            <div class="metric-cell">
+                <svg class="metric-cell-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M10 3 C6 3 3 6 3 10 S6 17 10 17 S17 14 17 10 S14 3 10 3"/>
+                    <path d="M10 7v3l3 2"/>
+                </svg>
+                <div class="metric-cell-val" id="mMoisSecurite">—</div>
+                <div class="metric-cell-lbl">Mois de sécurité</div>
+                <div class="metric-cell-trend" id="mMoisSecuriteTrend"></div>
+            </div>
+            <div class="metric-cell">
+                <svg class="metric-cell-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 16 L8 10 L12 12 L16 6"/>
+                    <circle cx="16" cy="6" r="2" fill="currentColor"/>
+                </svg>
+                <div class="metric-cell-val" id="mSoldeNet">—</div>
+                <div class="metric-cell-lbl">Solde mensuel net</div>
+                <div class="metric-cell-trend" id="mSoldeNetTrend"></div>
+            </div>
+        </div>
+
+        <!-- AI insights -->
+        <div class="insight-card" id="insightCard">
+            <div class="insight-card-header">
+                <span class="insight-ai-badge">IA</span>
+                <span class="insight-title">Recommandations préliminaires</span>
+            </div>
+            <ul class="insight-list" id="insightList">
+                <li class="insight-item" style="color: var(--muted);">
+                    Renseignez vos revenus et dépenses pour obtenir des recommandations personnalisées.
+                </li>
+            </ul>
+        </div>
+
+        <!-- ODD -->
+        <div>
+            <div class="section-eyebrow" style="margin-bottom: 12px;">Alignement ODD</div>
+            <div class="odd-row">
+                <span class="odd-pill" id="odd1">ODD 1 · Pauvreté</span>
+                <span class="odd-pill" id="odd8">ODD 8 · Travail</span>
+                <span class="odd-pill" id="odd10">ODD 10 · Inégalités</span>
+                <span class="odd-pill" id="odd17">ODD 17 · Partenariats</span>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    // ─── SLIDER ───────────────────────────────────────────────
+    function updateSlider(input) {
+        const pct = ((input.value - input.min) / (input.max - input.min)) * 100;
+        input.style.setProperty('--pct', pct + '%');
+        document.getElementById('sliderVal').textContent = 'DJF ' + Number(input.value).toLocaleString('fr-FR') + ' / mois';
+    }
+    updateSlider(document.getElementById('objectif'));
+
+    // ─── LIVE PREVIEW ─────────────────────────────────────────
+    function updatePreview() {
+        const revenu    = parseFloat(document.getElementById('revenu').value)    || 0;
+        const autres    = parseFloat(document.getElementById('autres_revenus').value) || 0;
+        const depenses  = parseFloat(document.getElementById('depenses').value)  || 0;
+        const epargne   = parseFloat(document.getElementById('epargne').value)   || 0;
+        const objectif  = parseFloat(document.getElementById('objectif').value)  || 0;
+
+        const revenuTotal = revenu + autres;
+        const solde       = revenuTotal - depenses;
+        const tauxEpargne = revenuTotal > 0 ? (solde / revenuTotal) * 100 : 0;
+        const moisSecu    = depenses > 0 ? epargne / depenses : 0;
+        const capacite    = Math.max(0, solde * 12 * 0.33);
+
+        // ── Score calculation (simplified model) ──────────────
+        let score = 0;
+        if (revenuTotal > 0) {
+            // Taux d'épargne (30%)
+            const epScore = Math.min(300, Math.max(0, tauxEpargne * 10));
+            // Sécurité (30%)
+            const secScore = Math.min(300, moisSecu * 50);
+            // Solde positif (20%)
+            const soldeScore = solde > 0 ? Math.min(200, (solde / revenuTotal) * 400) : 0;
+            // Objectif (20%)
+            const objScore = objectif > 0 ? Math.min(200, (objectif / revenuTotal) * 400) : 0;
+            score = Math.round(epScore + secScore + soldeScore + objScore);
+        }
+
+        // ── Render score ──────────────────────────────────────
+        const scoreBig  = document.getElementById('scoreBig');
+        const scoreFill = document.getElementById('scoreFill');
+        const scoreStatus = document.getElementById('scoreStatus');
+
+        if (revenuTotal > 0) {
+            scoreBig.innerHTML = `${score} <span>/ 1000</span>`;
+            scoreFill.style.width = (score / 10) + '%';
+
+            let statusText, statusColor;
+            if      (score >= 800) { statusText = '✦ Excellent profil d\'inclusion'; statusColor = '#4caf92'; }
+            else if (score >= 600) { statusText = '◈ Bon potentiel financier'; statusColor = 'var(--gold)'; }
+            else if (score >= 400) { statusText = '◇ Profil à développer'; statusColor = 'var(--gold)'; }
+            else                   { statusText = '○ Accompagnement recommandé'; statusColor = '#e8a84a'; }
+
+            scoreStatus.textContent = statusText;
+            scoreStatus.style.color = statusColor;
+        } else {
+            scoreBig.innerHTML = `— <span>/ 1000</span>`;
+            scoreFill.style.width = '0%';
+            scoreStatus.textContent = 'En attente de données';
+            scoreStatus.style.color = 'var(--gold)';
+        }
+
+        // ── Metrics ───────────────────────────────────────────
+        document.getElementById('mTauxEpargne').textContent =
+            revenuTotal > 0 ? tauxEpargne.toFixed(1) + ' %' : '—';
+        document.getElementById('mTauxEpargneTrend').textContent =
+            revenuTotal > 0 ? (tauxEpargne > 20 ? '↑ Bon taux' : tauxEpargne > 10 ? '→ Acceptable' : '↓ À améliorer') : '';
+
+        document.getElementById('mCapaciteCredit').textContent =
+            capacite > 0 ? 'DJF ' + Math.round(capacite).toLocaleString('fr-FR') : '—';
+        document.getElementById('mCapaciteCreditTrend').textContent =
+            capacite > 0 ? '↑ Estimation annuelle' : '';
+
+        document.getElementById('mMoisSecurite').textContent =
+            moisSecu > 0 ? moisSecu.toFixed(1) + ' mois' : '—';
+        document.getElementById('mMoisSecuriteTrend').textContent =
+            moisSecu >= 3 ? '↑ Bonne réserve' : moisSecu > 0 ? '↓ Réserve insuffisante' : '';
+
+        document.getElementById('mSoldeNet').textContent =
+            revenuTotal > 0 ? (solde >= 0 ? '+' : '') + 'DJF ' + Math.round(solde).toLocaleString('fr-FR') : '—';
+        document.getElementById('mSoldeNetTrend').textContent =
+            solde > 0 ? '↑ Positif' : solde < 0 ? '↓ Déficit' : '';
+
+        // ── Insights ──────────────────────────────────────────
+        const list = document.getElementById('insightList');
+        if (revenuTotal > 0) {
+            const tips = [];
+
+            if (tauxEpargne >= 20)
+                tips.push({ type: 'positive', text: 'Votre taux d\'épargne est excellent. Envisagez de placer l\'excédent dans un compte rémunéré ou un fonds d\'investissement à impact.' });
+            else if (tauxEpargne >= 10)
+                tips.push({ type: 'warning', text: `Votre taux d'épargne de ${tauxEpargne.toFixed(1)}% est correct. Essayez d'atteindre 20% en réduisant les dépenses variables.` });
+            else if (tauxEpargne > 0)
+                tips.push({ type: 'warning', text: `Taux d'épargne de ${tauxEpargne.toFixed(1)}% — en dessous du seuil recommandé. Un budget détaillé pourrait révéler des économies cachées.` });
+            else if (solde < 0)
+                tips.push({ type: '', text: 'Vos dépenses dépassent vos revenus. Une revue de vos charges fixes et variables est prioritaire.' });
+
+            if (moisSecu >= 6)
+                tips.push({ type: 'positive', text: `${moisSecu.toFixed(1)} mois de réserve — vous disposez d'un matelas de sécurité solide. Vous êtes éligible aux produits de microcrédit.` });
+            else if (moisSecu >= 3)
+                tips.push({ type: 'warning', text: `Réserve de ${moisSecu.toFixed(1)} mois. L'objectif recommandé est 6 mois de dépenses pour accéder aux meilleures offres.` });
+            else if (epargne > 0)
+                tips.push({ type: '', text: 'Votre épargne de précaution est faible. Avant d\'investir, constituez un fonds d\'urgence équivalent à 3 mois de charges.' });
+
+            if (tips.length === 0)
+                tips.push({ type: 'positive', text: 'Continuez à renseigner votre profil pour des recommandations plus précises.' });
+
+            list.innerHTML = tips.map(t =>
+                `<li class="insight-item ${t.type}">${t.text}</li>`
+            ).join('');
+        } else {
+            list.innerHTML = '<li class="insight-item" style="color: var(--muted);">Renseignez vos revenus et dépenses pour obtenir des recommandations personnalisées.</li>';
+        }
+
+        // ── ODD alignment ─────────────────────────────────────
+        document.getElementById('odd1').className  = 'odd-pill' + (score >= 400 ? ' active' : '');
+        document.getElementById('odd8').className  = 'odd-pill' + (solde > 0 ? ' active' : '');
+        document.getElementById('odd10').className = 'odd-pill' + (tauxEpargne >= 10 ? ' active-gold' : '');
+        document.getElementById('odd17').className = 'odd-pill' + (score >= 600 ? ' active' : '');
+    }
+
+    // ─── FORM SUBMIT LOADING ───────────────────────────────────
+    document.getElementById('simForm').addEventListener('submit', function(e) {
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = `
+            <div class="btn-submit-loading" style="display:flex;">
+                <div class="spinner"></div>
+                <span>Analyse en cours…</span>
+            </div>
+        `;
+        btn.disabled = true;
+    });
+</script>
+
+{% endblock %}

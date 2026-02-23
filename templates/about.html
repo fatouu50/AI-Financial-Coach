@@ -1,0 +1,761 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* ─── HERO VISION ────────────────────────────────────────── */
+    .vision-hero {
+        min-height: 90vh;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        gap: 80px;
+        padding: 80px 48px;
+        max-width: 1280px;
+        margin: 0 auto;
+        position: relative;
+    }
+
+    .vision-hero::before {
+        content: 'VISION';
+        position: absolute;
+        top: 60px;
+        right: 40px;
+        font-family: var(--font-display);
+        font-size: 180px;
+        font-weight: 300;
+        color: rgba(200, 169, 110, .07);
+        line-height: 1;
+        pointer-events: none;
+        letter-spacing: -.04em;
+        user-select: none;
+    }
+
+    .vision-hero-left {
+        position: relative;
+        z-index: 1;
+    }
+
+    .vision-hero-left .section-eyebrow {
+        animation: fadeUp .7s var(--ease) .1s both;
+    }
+
+    .vision-hero-title {
+        font-family: var(--font-display);
+        font-size: clamp(48px, 6vw, 88px);
+        font-weight: 300;
+        line-height: 1.04;
+        letter-spacing: -.02em;
+        color: var(--ink);
+        margin-bottom: 32px;
+        animation: fadeUp .7s var(--ease) .2s both;
+    }
+
+    .vision-hero-title em {
+        font-style: italic;
+        color: var(--teal);
+        display: block;
+    }
+
+    .vision-hero-lead {
+        font-family: var(--font-display);
+        font-size: 20px;
+        font-weight: 300;
+        line-height: 1.7;
+        color: var(--muted);
+        max-width: 480px;
+        margin-bottom: 44px;
+        animation: fadeUp .7s var(--ease) .3s both;
+    }
+
+    .vision-hero-actions {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        animation: fadeUp .7s var(--ease) .4s both;
+    }
+
+    /* ─── HERO RIGHT — MANIFESTO CARD ────────────────────────── */
+    .manifesto-card {
+        background: var(--ink);
+        color: var(--white);
+        border-radius: 3px;
+        padding: 48px;
+        position: relative;
+        overflow: hidden;
+        animation: fadeUp .8s var(--ease) .3s both;
+    }
+
+    .manifesto-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--gold), var(--teal-light));
+    }
+
+    .manifesto-card::after {
+        content: '"';
+        position: absolute;
+        bottom: -20px;
+        right: 24px;
+        font-family: var(--font-display);
+        font-size: 200px;
+        line-height: 1;
+        color: rgba(200, 169, 110, .07);
+        pointer-events: none;
+    }
+
+    .manifesto-quote {
+        font-family: var(--font-display);
+        font-size: 26px;
+        font-weight: 300;
+        font-style: italic;
+        line-height: 1.55;
+        color: var(--white);
+        margin-bottom: 28px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .manifesto-quote strong {
+        color: var(--gold);
+        font-style: normal;
+        font-weight: 400;
+    }
+
+    .manifesto-source {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+        color: rgba(200, 169, 110, .6);
+        border-top: 1px solid rgba(255,255,255,.08);
+        padding-top: 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ─── SEPARATOR ──────────────────────────────────────────── */
+    .section-sep {
+        width: 100%;
+        padding: 0 48px;
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    /* ─── PILLAR SECTION ─────────────────────────────────────── */
+    .pillars {
+        padding: 80px 48px;
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    .pillars-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: end;
+        margin-bottom: 56px;
+    }
+
+    .pillars-subtitle {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 300;
+        line-height: 1.7;
+        color: var(--muted);
+    }
+
+    .pillars-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+        background: rgba(200, 169, 110, .15);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .pillar {
+        background: var(--white);
+        padding: 44px 36px;
+        position: relative;
+        transition: background .3s var(--ease);
+    }
+
+    .pillar:hover { background: var(--surface-2); }
+
+    .pillar-number {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: .12em;
+        color: var(--gold);
+        margin-bottom: 28px;
+        display: block;
+    }
+
+    .pillar-icon {
+        width: 44px;
+        height: 44px;
+        margin-bottom: 24px;
+        color: var(--teal);
+    }
+
+    .pillar-title {
+        font-family: var(--font-display);
+        font-size: 28px;
+        font-weight: 400;
+        line-height: 1.2;
+        color: var(--ink);
+        margin-bottom: 16px;
+    }
+
+    .pillar-desc {
+        font-family: var(--font-ui);
+        font-size: 13px;
+        line-height: 1.75;
+        color: var(--muted);
+    }
+
+    /* ─── IMPACT NUMBERS ─────────────────────────────────────── */
+    .impact {
+        background: var(--ink-soft);
+        padding: 80px 48px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .impact::before {
+        content: '';
+        position: absolute;
+        top: -80px; right: -80px;
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(200, 169, 110, .08), transparent 70%);
+        pointer-events: none;
+    }
+
+    .impact-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    .impact-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2px;
+        background: rgba(255,255,255,.04);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 48px;
+    }
+
+    .impact-stat {
+        padding: 44px 36px;
+        background: rgba(255,255,255,.02);
+        transition: background .3s var(--ease);
+    }
+
+    .impact-stat:hover { background: rgba(255,255,255,.05); }
+
+    .impact-stat .num {
+        font-family: var(--font-display);
+        font-size: 56px;
+        font-weight: 300;
+        line-height: 1;
+        color: var(--white);
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .impact-stat .num span {
+        color: var(--gold);
+    }
+
+    .impact-stat .label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+        color: rgba(253, 252, 250, .4);
+        margin-top: 12px;
+        display: block;
+    }
+
+    .impact-stat .trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: #4caf92;
+        margin-top: 8px;
+    }
+
+    /* ─── WHO WE SERVE ───────────────────────────────────────── */
+    .audience {
+        padding: 80px 48px;
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    .audience-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        margin-top: 56px;
+    }
+
+    .audience-card {
+        border: 1px solid rgba(200, 169, 110, .2);
+        border-radius: 3px;
+        overflow: hidden;
+        transition: transform .3s var(--ease), box-shadow .3s var(--ease);
+        background: var(--white);
+    }
+
+    .audience-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 24px 64px rgba(10, 11, 13, .1);
+    }
+
+    .audience-card-top {
+        height: 6px;
+    }
+
+    .audience-card-top.yellow { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+    .audience-card-top.teal   { background: linear-gradient(90deg, var(--teal), var(--teal-light)); }
+    .audience-card-top.ink    { background: linear-gradient(90deg, var(--ink), var(--ink-soft)); }
+
+    .audience-card-body {
+        padding: 36px;
+    }
+
+    .audience-avatar {
+        font-size: 36px;
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .audience-name {
+        font-family: var(--font-display);
+        font-size: 26px;
+        font-weight: 400;
+        color: var(--ink);
+        margin-bottom: 12px;
+    }
+
+    .audience-desc {
+        font-size: 13px;
+        line-height: 1.75;
+        color: var(--muted);
+        margin-bottom: 24px;
+    }
+
+    .audience-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .tag {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 2px;
+        background: var(--surface-2);
+        color: var(--ink);
+        border: 1px solid rgba(200, 169, 110, .2);
+    }
+
+    /* ─── ROADMAP ────────────────────────────────────────────── */
+    .roadmap {
+        padding: 80px 48px;
+        max-width: 1280px;
+        margin: 0 auto;
+    }
+
+    .timeline {
+        margin-top: 56px;
+        position: relative;
+        padding-left: 40px;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 0; bottom: 0; left: 0;
+        width: 1px;
+        background: linear-gradient(to bottom, var(--gold), transparent);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 48px;
+        padding-left: 40px;
+        animation: fadeUp .6s var(--ease) both;
+    }
+
+    .timeline-item:last-child { padding-bottom: 0; }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -4.5px;
+        top: 6px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--gold);
+        border: 2px solid var(--surface);
+    }
+
+    .timeline-item.future::before {
+        background: transparent;
+        border-color: rgba(200, 169, 110, .4);
+    }
+
+    .timeline-phase {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 8px;
+    }
+
+    .timeline-title {
+        font-family: var(--font-display);
+        font-size: 24px;
+        font-weight: 400;
+        color: var(--ink);
+        margin-bottom: 10px;
+    }
+
+    .timeline-desc {
+        font-size: 13px;
+        line-height: 1.75;
+        color: var(--muted);
+        max-width: 560px;
+    }
+
+    /* ─── CTA BAND ───────────────────────────────────────────── */
+    .cta-band {
+        background: var(--teal);
+        padding: 80px 48px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-band::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 40px,
+            rgba(255,255,255,.015) 40px,
+            rgba(255,255,255,.015) 80px
+        );
+    }
+
+    .cta-band-inner {
+        position: relative;
+        z-index: 1;
+        max-width: 720px;
+        margin: 0 auto;
+    }
+
+    .cta-band-title {
+        font-family: var(--font-display);
+        font-size: clamp(36px, 5vw, 64px);
+        font-weight: 300;
+        font-style: italic;
+        color: var(--white);
+        line-height: 1.1;
+        margin-bottom: 28px;
+    }
+
+    .cta-band-sub {
+        font-family: var(--font-ui);
+        font-size: 13px;
+        font-weight: 400;
+        color: rgba(253, 252, 250, .65);
+        letter-spacing: .04em;
+        margin-bottom: 44px;
+    }
+
+    .btn-white {
+        background: var(--white);
+        color: var(--teal);
+        padding: 18px 40px;
+        border-radius: 2px;
+        font-family: var(--font-ui);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all .25s var(--ease);
+    }
+
+    .btn-white:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 48px rgba(0,0,0,.2);
+    }
+
+    /* ─── ANIMATIONS ─────────────────────────────────────────── */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Stagger timeline items */
+    .timeline-item:nth-child(1) { animation-delay: .1s; }
+    .timeline-item:nth-child(2) { animation-delay: .2s; }
+    .timeline-item:nth-child(3) { animation-delay: .3s; }
+    .timeline-item:nth-child(4) { animation-delay: .4s; }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 960px) {
+        .vision-hero { grid-template-columns: 1fr; min-height: auto; gap: 48px; }
+        .vision-hero::before { display: none; }
+        .pillars-header { grid-template-columns: 1fr; gap: 24px; }
+        .pillars-grid { grid-template-columns: 1fr; }
+        .impact-grid { grid-template-columns: repeat(2, 1fr); }
+        .audience-grid { grid-template-columns: 1fr; }
+        .vision-hero, .pillars, .audience, .roadmap { padding: 60px 24px; }
+        .impact, .cta-band { padding: 60px 24px; }
+    }
+
+    @media (max-width: 540px) {
+        .impact-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<!-- ─── HERO ──────────────────────────────────────────────────── -->
+<section class="vision-hero">
+    <div class="vision-hero-left">
+        <div class="section-eyebrow">Notre Vision</div>
+
+        <h1 class="vision-hero-title">
+            La finance,<br>
+            <em>accessible à tous.</em>
+        </h1>
+
+        <p class="vision-hero-lead">
+            Nous croyons que l'intelligence artificielle doit réduire
+            les inégalités financières — pas les creuser. Notre solution
+            permet aux populations sous-bancarisées d'accéder à des
+            décisions responsables, durables et compréhensibles.
+        </p>
+
+        <div class="vision-hero-actions">
+            <a href="/dashboard" class="btn btn-primary">
+                Essayer la simulation
+                <svg class="btn-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9h12M10 4l5 5-5 5"/>
+                </svg>
+            </a>
+            <a href="#pillars" class="btn btn-ghost">En savoir plus</a>
+        </div>
+    </div>
+
+    <div class="manifesto-card">
+        <p class="manifesto-quote">
+            L'inclusion financière n'est pas une option — c'est un
+            <strong>levier de transformation sociale</strong> pour les
+            1,4 milliard d'adultes encore exclus du système bancaire mondial.
+        </p>
+        <p class="manifesto-source">— Manifeste fondateur · AI Inclusive Finance, 2024</p>
+    </div>
+</section>
+
+<div class="section-sep"><div class="divider"></div></div>
+
+<!-- ─── PILLARS ───────────────────────────────────────────────── -->
+<section class="pillars" id="pillars">
+    <div class="pillars-header">
+        <div>
+            <div class="section-eyebrow">Nos Engagements</div>
+            <h2 class="section-title">Trois piliers,<br>une <em>mission</em></h2>
+        </div>
+        <p class="pillars-subtitle">
+            Chaque fonctionnalité que nous construisons répond à un impératif :
+            rendre la finance inclusive, intelligente et alignée avec les économies locales.
+        </p>
+    </div>
+
+    <div class="pillars-grid">
+        <div class="pillar">
+            <span class="pillar-number">01</span>
+            <svg class="pillar-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="22" cy="22" r="18"/>
+                <path d="M22 12v10l7 4"/>
+            </svg>
+            <h3 class="pillar-title">Inclusion<br>Financière</h3>
+            <p class="pillar-desc">Accès simplifié au crédit, à l'épargne et à l'investissement pour les jeunes, les femmes et les communautés rurales, sans barrière administrative ni score de crédit traditionnel.</p>
+        </div>
+
+        <div class="pillar">
+            <span class="pillar-number">02</span>
+            <svg class="pillar-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M8 36 L22 8 L36 36 Z"/>
+                <path d="M15 26h14M19 20h6"/>
+            </svg>
+            <h3 class="pillar-title">Intelligence<br>Responsable</h3>
+            <p class="pillar-desc">Des algorithmes d'IA explicables et auditables. Chaque recommandation est traçable, compréhensible et conçue pour renforcer l'autonomie financière — jamais pour créer de la dépendance.</p>
+        </div>
+
+        <div class="pillar">
+            <span class="pillar-number">03</span>
+            <svg class="pillar-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M10 34 C10 20 20 14 22 8 C24 14 34 20 34 34"/>
+                <path d="M16 34 C16 24 20 20 22 16 C24 20 28 24 28 34"/>
+            </svg>
+            <h3 class="pillar-title">Impact<br>Durable</h3>
+            <p class="pillar-desc">Investissement aligné sur les ODD et les économies locales. Nous mesurons le retour social autant que le retour financier, pour un impact mesurable sur les communautés.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ─── IMPACT NUMBERS ────────────────────────────────────────── -->
+<section class="impact">
+    <div class="impact-inner">
+        <div class="section-eyebrow" style="color: var(--gold-light);">Impact en Chiffres</div>
+        <h2 class="section-title" style="color: var(--white);">Ce que nous <em>construisons</em></h2>
+
+        <div class="impact-grid">
+            <div class="impact-stat">
+                <span class="num">1,4<span>Md</span></span>
+                <span class="label">Adultes non bancarisés dans le monde</span>
+                <span class="trend">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 7L5 3l3 4"/></svg>
+                    Notre cible prioritaire
+                </span>
+            </div>
+            <div class="impact-stat">
+                <span class="num">38<span>%</span></span>
+                <span class="label">Taux d'inclusion financière en Afrique subsaharienne</span>
+                <span class="trend">↑ +5pts en 3 ans</span>
+            </div>
+            <div class="impact-stat">
+                <span class="num">3,8<span>×</span></span>
+                <span class="label">Retour social estimé pour chaque euro investi</span>
+                <span class="trend">↑ vs 2.1× industrie</span>
+            </div>
+            <div class="impact-stat">
+                <span class="num">94<span>/100</span></span>
+                <span class="label">Score d'équité algorithmique de notre modèle IA</span>
+                <span class="trend">↑ Audité indépendamment</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ─── WHO WE SERVE ──────────────────────────────────────────── -->
+<section class="audience">
+    <div class="section-eyebrow">Pour Qui</div>
+    <h2 class="section-title">Conçu pour ceux qui<br><em>en ont le plus besoin</em></h2>
+
+    <div class="audience-grid">
+        <div class="audience-card">
+            <div class="audience-card-top yellow"></div>
+            <div class="audience-card-body">
+                <span class="audience-avatar">👩🏽‍🎓</span>
+                <h3 class="audience-name">Les Jeunes</h3>
+                <p class="audience-desc">18–30 ans, sans historique de crédit. Notre IA évalue le potentiel, pas le passé financier — pour ouvrir l'accès à l'épargne et au microcrédit dès le premier euro.</p>
+                <div class="audience-tags">
+                    <span class="tag">Microcrédit</span>
+                    <span class="tag">Épargne guidée</span>
+                    <span class="tag">Éducation financière</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="audience-card">
+            <div class="audience-card-top teal"></div>
+            <div class="audience-card-body">
+                <span class="audience-avatar">👩🏿‍💼</span>
+                <h3 class="audience-name">Les Femmes</h3>
+                <p class="audience-desc">Entrepreneures, cheffes de famille, travailleuses informelles. Des outils de financement conçus pour les réalités économiques féminines, souvent ignorées par les modèles classiques.</p>
+                <div class="audience-tags">
+                    <span class="tag">Financement PME</span>
+                    <span class="tag">Score alternatif</span>
+                    <span class="tag">Coaching IA</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="audience-card">
+            <div class="audience-card-top ink"></div>
+            <div class="audience-card-body">
+                <span class="audience-avatar">🌍</span>
+                <h3 class="audience-name">Les Communautés</h3>
+                <p class="audience-desc">Zones rurales, économies informelles, diasporas. Une plateforme pensée pour les contextes locaux : multilingue, mobile-first, et respectueuse des modèles de solidarité traditionnels.</p>
+                <div class="audience-tags">
+                    <span class="tag">Mobile money</span>
+                    <span class="tag">Tontines digitales</span>
+                    <span class="tag">Impact local</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="section-sep" style="max-width:1280px;padding:0 48px;margin:0 auto;"><div class="divider"></div></div>
+
+<!-- ─── ROADMAP ───────────────────────────────────────────────── -->
+<section class="roadmap">
+    <div class="section-eyebrow">Feuille de Route</div>
+    <h2 class="section-title">Notre chemin<br>vers <em>l'impact</em></h2>
+
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="timeline-phase">Phase 01 · 2024 — Fondation</div>
+            <h3 class="timeline-title">Prototype & Validation</h3>
+            <p class="timeline-desc">Développement du moteur de scoring IA, partenariats avec 3 IMF pilotes au Sénégal et en Côte d'Ivoire. Première cohorte de 500 utilisateurs testeurs.</p>
+        </div>
+
+        <div class="timeline-item">
+            <div class="timeline-phase">Phase 02 · 2025 — Déploiement</div>
+            <h3 class="timeline-title">Lancement & Croissance</h3>
+            <p class="timeline-desc">Ouverture de la plateforme au grand public. Intégration mobile money (Wave, Orange Money). Expansion vers 5 marchés africains et le marché MENA.</p>
+        </div>
+
+        <div class="timeline-item">
+            <div class="timeline-phase">Phase 03 · 2026 — Échelle</div>
+            <h3 class="timeline-title">Impact à Grande Échelle</h3>
+            <p class="timeline-desc">100 000 utilisateurs actifs. Lancement du fonds d'investissement à impact. Mesure et publication de l'impact social annuel selon les standards IRIS+.</p>
+        </div>
+
+        <div class="timeline-item future">
+            <div class="timeline-phase">Phase 04 · 2027+ — Vision</div>
+            <h3 class="timeline-title" style="color: var(--muted)">Infrastructure Financière Ouverte</h3>
+            <p class="timeline-desc">API ouverte pour les institutions partenaires. Contribution aux standards mondiaux de la finance inclusive. Un million de vies financières transformées.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ─── CTA ───────────────────────────────────────────────────── -->
+<section class="cta-band">
+    <div class="cta-band-inner">
+        <h2 class="cta-band-title">Prêt à simuler<br>votre impact ?</h2>
+        <p class="cta-band-sub">Testez notre moteur IA en quelques minutes — sans inscription, sans engagement.</p>
+        <a href="/dashboard" class="btn-white">
+            Lancer la simulation
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9h12M10 4l5 5-5 5"/>
+            </svg>
+        </a>
+    </div>
+</section>
+
+{% endblock %}

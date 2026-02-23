@@ -1,0 +1,892 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* ─── VARIABLES LOCALES ──────────────────────────────────── */
+    :root {
+        --green:  #2d8a6a;
+        --green-bg: rgba(45,138,106,.08);
+        --green-border: rgba(45,138,106,.25);
+        --orange: #c47c1a;
+        --orange-bg: rgba(196,124,26,.08);
+        --orange-border: rgba(196,124,26,.25);
+        --red:    #c0392b;
+        --red-bg: rgba(192,57,43,.08);
+        --red-border: rgba(192,57,43,.25);
+    }
+
+    /* ─── LAYOUT ─────────────────────────────────────────────── */
+    .coach-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 56px 48px 100px;
+    }
+
+    /* ─── TOPBAR ─────────────────────────────────────────────── */
+    .coach-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 48px;
+        animation: fadeUp .5s var(--ease) .1s both;
+    }
+
+    .breadcrumb {
+        display: flex; align-items: center; gap: 10px;
+        font-family: var(--font-mono); font-size: 10px;
+        letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; transition: color .2s; }
+    .breadcrumb a:hover { color: var(--ink); }
+    .breadcrumb span { color: rgba(107,107,107,.3); }
+    .breadcrumb strong { color: var(--ink); }
+
+    .coach-meta {
+        display: flex; align-items: center; gap: 20px;
+    }
+
+    .score-pill {
+        font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+        letter-spacing: .12em; text-transform: uppercase;
+        background: var(--ink); color: var(--gold);
+        padding: 8px 16px; border-radius: 2px;
+        display: flex; align-items: center; gap: 8px;
+    }
+
+    .score-pill-num {
+        font-family: var(--font-display); font-size: 18px; font-weight: 300;
+        color: var(--white); line-height: 1;
+    }
+
+    /* ─── VERDICT BANNER ─────────────────────────────────────── */
+    .verdict-banner {
+        border-radius: 3px; padding: 36px 44px;
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 32px; margin-bottom: 48px; position: relative; overflow: hidden;
+        animation: fadeUp .6s var(--ease) .2s both;
+    }
+
+    .verdict-banner::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--gold), var(--teal));
+    }
+
+    .verdict-banner.green  { background: var(--green-bg);  border: 1px solid var(--green-border); }
+    .verdict-banner.teal   { background: rgba(15,76,92,.07); border: 1px solid rgba(15,76,92,.2); }
+    .verdict-banner.orange { background: var(--orange-bg); border: 1px solid var(--orange-border); }
+    .verdict-banner.red    { background: var(--red-bg);    border: 1px solid var(--red-border); }
+
+    .verdict-title {
+        font-family: var(--font-display); font-size: 28px; font-weight: 400;
+        color: var(--ink); margin-bottom: 10px; line-height: 1.2;
+    }
+
+    .verdict-message {
+        font-family: var(--font-ui); font-size: 14px; line-height: 1.7;
+        color: var(--muted); max-width: 620px;
+    }
+
+    .verdict-stats {
+        display: flex; gap: 24px; flex-shrink: 0;
+    }
+
+    .verdict-stat {
+        text-align: center;
+    }
+
+    .verdict-stat-num {
+        font-family: var(--font-display); font-size: 40px; font-weight: 300;
+        line-height: 1; color: var(--ink); display: block;
+    }
+
+    .verdict-stat-num.green  { color: var(--green); }
+    .verdict-stat-num.orange { color: var(--orange); }
+    .verdict-stat-num.red    { color: var(--red); }
+
+    .verdict-stat-lbl {
+        font-family: var(--font-mono); font-size: 8px; letter-spacing: .14em;
+        text-transform: uppercase; color: var(--muted); margin-top: 4px; display: block;
+    }
+
+    /* ─── SECTION TITLE ──────────────────────────────────────── */
+    .section-block {
+        margin-bottom: 48px;
+        animation: fadeUp .6s var(--ease) both;
+    }
+
+    .section-block:nth-child(3) { animation-delay: .25s; }
+    .section-block:nth-child(4) { animation-delay: .3s; }
+    .section-block:nth-child(5) { animation-delay: .35s; }
+    .section-block:nth-child(6) { animation-delay: .4s; }
+    .section-block:nth-child(7) { animation-delay: .45s; }
+
+    /* ─── OPPORTUNITIES GRID ─────────────────────────────────── */
+    .opps-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 28px;
+    }
+
+    /* ─── OPP CARD ───────────────────────────────────────────── */
+    .opp-card {
+        background: var(--white);
+        border-radius: 3px;
+        overflow: hidden;
+        border: 1px solid rgba(200,169,110,.15);
+        transition: transform .3s var(--ease), box-shadow .3s var(--ease);
+        position: relative;
+        cursor: default;
+    }
+
+    .opp-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 48px rgba(10,11,13,.1);
+    }
+
+    /* Status top strip */
+    .opp-status-strip {
+        height: 4px; width: 100%;
+    }
+    .strip-green  { background: linear-gradient(90deg, #2d8a6a, #4caf92); }
+    .strip-orange { background: linear-gradient(90deg, #c47c1a, #e8a84a); }
+    .strip-red    { background: linear-gradient(90deg, #c0392b, #e05c5c); }
+
+    .opp-card-body { padding: 24px; }
+
+    .opp-card-top {
+        display: flex; align-items: flex-start;
+        justify-content: space-between; margin-bottom: 14px;
+    }
+
+    .opp-emoji { font-size: 28px; line-height: 1; }
+
+    .opp-badge {
+        font-family: var(--font-mono); font-size: 8px; font-weight: 500;
+        letter-spacing: .12em; text-transform: uppercase;
+        padding: 4px 10px; border-radius: 2px;
+    }
+    .badge-green  { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border); }
+    .badge-orange { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-border); }
+    .badge-red    { background: var(--red-bg);    color: var(--red);    border: 1px solid var(--red-border); }
+
+    .opp-name {
+        font-family: var(--font-display); font-size: 20px; font-weight: 400;
+        color: var(--ink); line-height: 1.2; margin-bottom: 6px;
+    }
+
+    .opp-desc {
+        font-size: 12px; line-height: 1.65; color: var(--muted); margin-bottom: 20px;
+    }
+
+    .opp-divider {
+        height: 1px; background: rgba(200,169,110,.12); margin-bottom: 16px;
+    }
+
+    /* Simulation numbers */
+    .opp-sim {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+        background: rgba(200,169,110,.08); border-radius: 2px; overflow: hidden;
+        margin-bottom: 14px;
+    }
+
+    .sim-cell {
+        background: var(--surface); padding: 10px 12px;
+    }
+
+    .sim-val {
+        font-family: var(--font-display); font-size: 16px; font-weight: 400;
+        color: var(--ink); line-height: 1; display: block; margin-bottom: 2px;
+    }
+
+    .sim-lbl {
+        font-family: var(--font-mono); font-size: 8px; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--muted);
+    }
+
+    /* Faisabilité message */
+    .opp-faisabilite {
+        font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em;
+        line-height: 1.5; padding: 8px 12px; border-radius: 2px;
+    }
+
+    .fais-green  { background: var(--green-bg);  color: var(--green); }
+    .fais-orange { background: var(--orange-bg); color: var(--orange); }
+    .fais-red    { background: var(--red-bg);    color: var(--red); }
+
+    /* Cash flow badge */
+    .cash-flow-row {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-top: 10px; padding: 8px 12px;
+        background: var(--surface); border-radius: 2px;
+    }
+
+    .cash-flow-lbl {
+        font-family: var(--font-mono); font-size: 8px; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--muted);
+    }
+
+    .cash-flow-val {
+        font-family: var(--font-display); font-size: 16px; font-weight: 400;
+    }
+
+    .cash-flow-val.positive { color: var(--green); }
+    .cash-flow-val.negative { color: var(--red); }
+
+    /* Épargne card */
+    .epargne-sim {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+        background: rgba(200,169,110,.08); border-radius: 2px; overflow: hidden;
+        margin-bottom: 14px;
+    }
+
+    /* ─── PROJET PERSO ───────────────────────────────────────── */
+    .projet-perso-card {
+        background: var(--ink); border-radius: 3px; overflow: hidden;
+        margin-top: 28px; position: relative;
+    }
+
+    .projet-perso-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, var(--gold), var(--teal));
+    }
+
+    .projet-perso-inner { padding: 36px 40px; }
+
+    .projet-perso-header {
+        display: flex; align-items: center; gap: 14px; margin-bottom: 28px;
+    }
+
+    .projet-perso-badge {
+        font-family: var(--font-mono); font-size: 8px; font-weight: 500;
+        letter-spacing: .16em; text-transform: uppercase;
+        background: var(--gold); color: var(--ink); padding: 5px 12px; border-radius: 2px;
+    }
+
+    .projet-perso-title {
+        font-family: var(--font-display); font-size: 26px; font-weight: 300;
+        font-style: italic; color: var(--white);
+    }
+
+    .projet-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+        background: rgba(255,255,255,.04); border-radius: 2px; overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .projet-cell { background: rgba(255,255,255,.03); padding: 20px; }
+
+    .projet-cell-val {
+        font-family: var(--font-display); font-size: 24px; font-weight: 300;
+        color: var(--white); line-height: 1; display: block; margin-bottom: 4px;
+    }
+
+    .projet-cell-lbl {
+        font-family: var(--font-mono); font-size: 8px; letter-spacing: .12em;
+        text-transform: uppercase; color: rgba(253,252,250,.35);
+    }
+
+    .projet-verdict {
+        padding: 16px 20px; border-radius: 2px;
+        font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em;
+        line-height: 1.6;
+    }
+
+    .projet-verdict.green  { background: rgba(45,138,106,.15);  color: #6dd4aa; border: 1px solid rgba(45,138,106,.3); }
+    .projet-verdict.orange { background: rgba(196,124,26,.15);  color: #f0b862; border: 1px solid rgba(196,124,26,.3); }
+    .projet-verdict.red    { background: rgba(192,57,43,.15);   color: #f08070; border: 1px solid rgba(192,57,43,.3); }
+
+    /* ─── PLAN D'ACTION ──────────────────────────────────────── */
+    .plan-timeline {
+        position: relative; padding-left: 48px; margin-top: 28px;
+    }
+
+    .plan-timeline::before {
+        content: ''; position: absolute; left: 14px; top: 0; bottom: 0;
+        width: 1px; background: linear-gradient(to bottom, var(--gold), transparent);
+    }
+
+    .plan-step {
+        position: relative; padding-bottom: 36px;
+    }
+
+    .plan-step:last-child { padding-bottom: 0; }
+
+    .plan-step-dot {
+        position: absolute; left: -40px; top: 4px;
+        width: 28px; height: 28px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+        border: 1.5px solid; flex-shrink: 0;
+    }
+
+    .dot-action      { background: var(--ink);    color: var(--gold);   border-color: var(--gold); }
+    .dot-urgent      { background: var(--red-bg); color: var(--red);    border-color: var(--red); }
+    .dot-epargne     { background: rgba(15,76,92,.12); color: var(--teal); border-color: var(--teal); }
+    .dot-objectif    { background: var(--orange-bg); color: var(--orange); border-color: var(--orange); }
+    .dot-faisable    { background: var(--green-bg);  color: var(--green);  border-color: var(--green); }
+    .dot-investissement { background: rgba(200,169,110,.15); color: #8a6a1e; border-color: var(--gold); }
+
+    .plan-step-content {
+        background: var(--white); border: 1px solid rgba(200,169,110,.15);
+        border-radius: 3px; padding: 20px 24px;
+        transition: border-color .2s;
+    }
+
+    .plan-step-content:hover { border-color: rgba(200,169,110,.35); }
+
+    .plan-step-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .plan-step-title {
+        font-family: var(--font-display); font-size: 18px; font-weight: 400;
+        color: var(--ink);
+    }
+
+    .plan-step-montant {
+        font-family: var(--font-display); font-size: 20px; font-weight: 300;
+        color: var(--teal);
+    }
+
+    .plan-step-texte {
+        font-size: 13px; line-height: 1.7; color: var(--muted);
+    }
+
+    /* ─── FORMULAIRE PROJET PERSO ────────────────────────────── */
+    .projet-form-card {
+        background: var(--white); border: 1.5px solid rgba(200,169,110,.2);
+        border-radius: 3px; overflow: hidden; margin-top: 28px;
+    }
+
+    .projet-form-header {
+        padding: 20px 28px; background: var(--surface);
+        border-bottom: 1px solid rgba(200,169,110,.15);
+        display: flex; align-items: center; gap: 12px;
+    }
+
+    .projet-form-body { padding: 28px; }
+
+    .pf-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .pf-full { grid-column: span 2; }
+
+    .pf-label {
+        display: block; font-family: var(--font-mono); font-size: 9px;
+        font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+        color: var(--muted); margin-bottom: 7px; transition: color .2s;
+    }
+
+    .pf-group:focus-within .pf-label { color: var(--teal); }
+
+    .pf-input, .pf-select {
+        width: 100%; padding: 12px 14px;
+        font-family: var(--font-mono); font-size: 11px; color: var(--ink);
+        background: var(--surface); border: 1.5px solid rgba(200,169,110,.2);
+        border-radius: 2px; outline: none;
+        transition: border-color .2s, box-shadow .2s;
+        -moz-appearance: textfield; appearance: textfield;
+    }
+
+    .pf-input::-webkit-outer-spin-button,
+    .pf-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    .pf-input:focus, .pf-select:focus {
+        border-color: var(--teal);
+        box-shadow: 0 0 0 3px rgba(15,76,92,.07);
+        background: var(--white);
+    }
+
+    .pf-select {
+        cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b6b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 12px center;
+    }
+
+    .pf-hint {
+        font-family: var(--font-mono); font-size: 8px; letter-spacing: .08em;
+        color: rgba(107,107,107,.4); margin-top: 4px;
+    }
+
+    /* ─── CTA BAND ───────────────────────────────────────────── */
+    .coach-cta {
+        background: var(--ink); border-radius: 3px; padding: 40px 48px;
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 32px; position: relative; overflow: hidden;
+        margin-top: 56px;
+        animation: fadeUp .6s var(--ease) .5s both;
+    }
+
+    .coach-cta::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, var(--gold), var(--teal));
+    }
+
+    .coach-cta-title {
+        font-family: var(--font-display); font-size: 28px; font-weight: 300;
+        font-style: italic; color: var(--white); margin-bottom: 6px;
+    }
+
+    .coach-cta-sub {
+        font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em;
+        text-transform: uppercase; color: rgba(253,252,250,.3);
+    }
+
+    .coach-cta-btns { display: flex; gap: 12px; flex-shrink: 0; }
+
+    .btn-cta-white {
+        font-family: var(--font-ui); font-size: 10px; font-weight: 700;
+        letter-spacing: .1em; text-transform: uppercase; text-decoration: none;
+        padding: 14px 26px; border-radius: 2px; border: none; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 8px;
+        transition: all .25s var(--ease);
+    }
+
+    .btn-cta-white.solid { background: var(--white); color: var(--ink); }
+    .btn-cta-white.solid:hover {
+        background: var(--gold); color: var(--white);
+        transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    }
+
+    .btn-cta-white.ghost {
+        background: transparent; color: rgba(253,252,250,.55);
+        border: 1.5px solid rgba(255,255,255,.12);
+    }
+
+    .btn-cta-white.ghost:hover { color: var(--white); border-color: rgba(255,255,255,.4); }
+
+    /* ─── ANIMATIONS ─────────────────────────────────────────── */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── FDJ HELPER ─────────────────────────────────────────── */
+    .fdj { font-size: .8em; color: var(--gold); }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+        .opps-grid { grid-template-columns: repeat(2, 1fr); }
+        .projet-grid { grid-template-columns: repeat(2, 1fr); }
+        .verdict-stats { display: none; }
+    }
+
+    @media (max-width: 640px) {
+        .coach-page { padding: 32px 20px 60px; }
+        .opps-grid { grid-template-columns: 1fr; }
+        .pf-grid { grid-template-columns: 1fr; }
+        .pf-full { grid-column: span 1; }
+        .coach-cta { flex-direction: column; align-items: flex-start; }
+        .coach-cta-btns { flex-direction: column; width: 100%; }
+    }
+</style>
+
+<div class="coach-page">
+
+    <!-- ── TOP BAR ── -->
+    <div class="coach-topbar">
+        <div class="breadcrumb">
+            <a href="/">Accueil</a>
+            <span>/</span>
+            <a href="/dashboard">Simulation</a>
+            <span>/</span>
+            <strong>Coach Financier</strong>
+        </div>
+        <div class="coach-meta">
+            <div class="score-pill">
+                Score <span class="score-pill-num">{{ data.score }}</span> / 1000
+            </div>
+        </div>
+    </div>
+
+    <!-- ── VERDICT ── -->
+    <div class="verdict-banner {{ coaching.verdict.couleur }}"
+         style="animation: fadeUp .6s var(--ease) .15s both;">
+        <div>
+            <div class="verdict-title">{{ coaching.verdict.titre }}</div>
+            <p class="verdict-message">{{ coaching.verdict.message }}</p>
+        </div>
+        <div class="verdict-stats">
+            <div class="verdict-stat">
+                <span class="verdict-stat-num green">{{ coaching.nb_faisables }}</span>
+                <span class="verdict-stat-lbl">Faisables</span>
+            </div>
+            <div class="verdict-stat">
+                <span class="verdict-stat-num orange">{{ coaching.nb_tendus }}</span>
+                <span class="verdict-stat-lbl">Tendus</span>
+            </div>
+            <div class="verdict-stat">
+                <span class="verdict-stat-num red">{{ coaching.nb_deconseillee }}</span>
+                <span class="verdict-stat-lbl">Déconseillés</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         PROJET PERSONNEL (si soumis)
+    ═══════════════════════════════════════════════════════════ -->
+    {% if coaching.projet_perso %}
+    <div class="section-block">
+        <div class="section-eyebrow">🎯 Votre Projet Personnel</div>
+        <h2 class="section-title" style="margin-top:10px;">
+            {{ coaching.projet_perso.nom }}
+        </h2>
+
+        <div class="projet-perso-card">
+            <div class="projet-perso-inner">
+                <div class="projet-perso-header">
+                    <span class="projet-perso-badge">Simulation personnalisée</span>
+                    <span class="projet-perso-title">{{ coaching.projet_perso.nom }}</span>
+                </div>
+
+                <div class="projet-grid">
+                    <div class="projet-cell">
+                        <span class="projet-cell-val">
+                            {{ "{:,.0f}".format(coaching.projet_perso.prix) }}
+                            <small style="font-size:.5em; color: var(--gold);">FDJ</small>
+                        </span>
+                        <span class="projet-cell-lbl">Prix total</span>
+                    </div>
+                    <div class="projet-cell">
+                        <span class="projet-cell-val">
+                            {{ "{:,.0f}".format(coaching.projet_perso.simulation.apport) }}
+                            <small style="font-size:.5em; color: var(--gold);">FDJ</small>
+                        </span>
+                        <span class="projet-cell-lbl">Apport requis</span>
+                    </div>
+                    <div class="projet-cell">
+                        <span class="projet-cell-val">
+                            {{ "{:,.0f}".format(coaching.projet_perso.simulation.mensualite) }}
+                            <small style="font-size:.5em; color: var(--gold);">FDJ</small>
+                        </span>
+                        <span class="projet-cell-lbl">Mensualité</span>
+                    </div>
+                    <div class="projet-cell">
+                        <span class="projet-cell-val">{{ coaching.projet_perso.simulation.duree_ans }} ans</span>
+                        <span class="projet-cell-lbl">Durée crédit</span>
+                    </div>
+                </div>
+
+                <div class="projet-verdict {{ coaching.projet_perso.faisabilite.couleur }}">
+                    {% if coaching.projet_perso.faisabilite.couleur == "green" %}✅
+                    {% elif coaching.projet_perso.faisabilite.couleur == "orange" %}⚠️
+                    {% else %}❌{% endif %}
+                    {{ coaching.projet_perso.faisabilite.message }}
+                    — Mensualité = {{ coaching.projet_perso.faisabilite.ratio }}% de vos revenus
+                    (max recommandé : 33%)
+                </div>
+
+                {% if coaching.projet_perso.cash_flow is defined %}
+                <div style="margin-top: 14px; padding: 14px 20px; background: rgba(255,255,255,.04); border-radius: 2px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: rgba(253,252,250,.35);">Cash-flow locatif mensuel</span>
+                    <span style="font-family: var(--font-display); font-size: 22px; font-weight: 300; color: {% if coaching.projet_perso.cash_flow_positif %}#6dd4aa{% else %}#f08070{% endif %};">
+                        {% if coaching.projet_perso.cash_flow > 0 %}+{% endif %}{{ "{:,.0f}".format(coaching.projet_perso.cash_flow) }} FDJ
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ════════════════════════════════════════════════════════
+         OPPORTUNITÉS CATALOGUE
+    ═══════════════════════════════════════════════════════════ -->
+    <div class="section-block">
+        <div class="section-eyebrow">Opportunités à Djibouti</div>
+        <h2 class="section-title" style="margin-top:10px;">
+            Ce que vous pouvez <em>financer</em>
+        </h2>
+
+        <!-- Filtre tabs -->
+        <div style="display:flex; gap:8px; margin: 20px 0; flex-wrap:wrap;" id="filterTabs">
+            <button class="filter-tab active" onclick="filtrer('tous', this)">
+                Tout voir
+            </button>
+            <button class="filter-tab" onclick="filtrer('immobilier', this)">🏠 Immobilier</button>
+            <button class="filter-tab" onclick="filtrer('terrain', this)">🗺️ Terrain</button>
+            <button class="filter-tab" onclick="filtrer('auto', this)">🚗 Auto</button>
+            <button class="filter-tab" onclick="filtrer('locatif', this)">🏘️ Locatif</button>
+            <button class="filter-tab" onclick="filtrer('epargne', this)">🏦 Épargne</button>
+        </div>
+
+        <style>
+            .filter-tab {
+                font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+                letter-spacing: .1em; text-transform: uppercase;
+                padding: 8px 16px; border-radius: 2px; border: 1.5px solid rgba(200,169,110,.2);
+                background: var(--white); color: var(--muted); cursor: pointer;
+                transition: all .2s var(--ease);
+            }
+            .filter-tab:hover { border-color: var(--teal); color: var(--teal); }
+            .filter-tab.active { background: var(--ink); color: var(--gold); border-color: var(--ink); }
+        </style>
+
+        <div class="opps-grid" id="oppsGrid">
+            {% for opp in coaching.opportunites %}
+            <div class="opp-card" data-type="{{ opp.type }}">
+                <div class="opp-status-strip strip-{{ opp.faisabilite.couleur }}"></div>
+                <div class="opp-card-body">
+
+                    <div class="opp-card-top">
+                        <span class="opp-emoji">{{ opp.emoji }}</span>
+                        <span class="opp-badge badge-{{ opp.faisabilite.couleur }}">
+                            {% if opp.faisabilite.statut == "faisable" %}✓ Faisable
+                            {% elif opp.faisabilite.statut == "tendu" %}~ Tendu
+                            {% elif opp.faisabilite.statut == "deconseille" %}✗ Déconseillé
+                            {% else %}✗ Impossible{% endif %}
+                        </span>
+                    </div>
+
+                    <h3 class="opp-name">{{ opp.nom }}</h3>
+                    <p class="opp-desc">{{ opp.description }}</p>
+                    <div class="opp-divider"></div>
+
+                    {% if opp.type == "epargne" %}
+                    <!-- Carte épargne -->
+                    <div class="epargne-sim">
+                        <div class="sim-cell">
+                            <span class="sim-val">{{ "{:,.0f}".format(opp.simulation.versement) }} <small class="fdj">FDJ</small></span>
+                            <span class="sim-lbl">/ mois</span>
+                        </div>
+                        <div class="sim-cell">
+                            <span class="sim-val">{{ "{:,.0f}".format(opp.simulation.total) }} <small class="fdj">FDJ</small></span>
+                            <span class="sim-lbl">Capital final</span>
+                        </div>
+                        <div class="sim-cell">
+                            <span class="sim-val">+{{ "{:,.0f}".format(opp.simulation.interets) }} <small class="fdj">FDJ</small></span>
+                            <span class="sim-lbl">Intérêts</span>
+                        </div>
+                    </div>
+                    <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-bottom:10px;">
+                        Objectif : {{ opp.objectif }}
+                    </div>
+
+                    {% else %}
+                    <!-- Carte crédit -->
+                    <div class="opp-sim">
+                        <div class="sim-cell">
+                            <span class="sim-val">{{ "{:,.0f}".format(opp.simulation.mensualite) }} <small class="fdj">FDJ</small></span>
+                            <span class="sim-lbl">/ mois</span>
+                        </div>
+                        <div class="sim-cell">
+                            <span class="sim-val">{{ opp.get('duree_choisie', opp.get('duree_max', '?')) }} ans</span>
+                            <span class="sim-lbl">Durée</span>
+                        </div>
+                        <div class="sim-cell">
+                            <span class="sim-val">{{ "{:,.0f}".format(opp.simulation.apport) }} <small class="fdj">FDJ</small></span>
+                            <span class="sim-lbl">Apport</span>
+                        </div>
+                        <div class="sim-cell">
+                            <span class="sim-val">{{ opp.simulation.taux_annuel }}%</span>
+                            <span class="sim-lbl">Taux/an</span>
+                        </div>
+                    </div>
+
+                    {% if opp.type == "locatif" and opp.cash_flow is defined %}
+                    <div class="cash-flow-row">
+                        <span class="cash-flow-lbl">Cash-flow locatif</span>
+                        <span class="cash-flow-val {{ 'positive' if opp.cash_flow_positif else 'negative' }}">
+                            {% if opp.cash_flow > 0 %}+{% endif %}{{ "{:,.0f}".format(opp.cash_flow) }} FDJ/mois
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    <div class="opp-faisabilite fais-{{ opp.faisabilite.couleur }}">
+                        {{ opp.faisabilite.message }}
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         PLAN D'ACTION
+    ═══════════════════════════════════════════════════════════ -->
+    <div class="section-block">
+        <div class="section-eyebrow">Plan d'Action</div>
+        <h2 class="section-title" style="margin-top:10px;">
+            Votre feuille de route <em>mensuelle</em>
+        </h2>
+
+        <div class="plan-timeline">
+            {% for etape in coaching.plan_action %}
+            <div class="plan-step">
+                <div class="plan-step-dot dot-{{ etape.type }}">{{ etape.numero }}</div>
+                <div class="plan-step-content">
+                    <div class="plan-step-header">
+                        <h3 class="plan-step-title">{{ etape.titre }}</h3>
+                        {% if etape.montant > 0 %}
+                        <span class="plan-step-montant">{{ "{:,.0f}".format(etape.montant) }} FDJ</span>
+                        {% endif %}
+                    </div>
+                    <p class="plan-step-texte">{{ etape.texte }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         AJOUTER UN PROJET PERSONNEL
+    ═══════════════════════════════════════════════════════════ -->
+    <div class="section-block">
+        <div class="section-eyebrow">Simulez Votre Projet</div>
+        <h2 class="section-title" style="margin-top:10px;">
+            Entrez <em>votre propre projet</em>
+        </h2>
+        <p style="font-family:var(--font-display);font-size:16px;font-weight:300;color:var(--muted);margin-top:8px;max-width:560px;">
+            Un bien précis en tête ? Entrez le prix et l'IA calcule si c'est dans votre portée.
+        </p>
+
+        <div class="projet-form-card">
+            <div class="projet-form-header">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--teal);">
+                    <path d="M8 1v14M1 8h14"/>
+                </svg>
+                <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);">
+                    Simulation personnalisée
+                </span>
+            </div>
+            <div class="projet-form-body">
+                <form action="/coach" method="POST" id="projetForm">
+                    <!-- Champs cachés — reprendre les données déjà saisies -->
+                    <input type="hidden" name="revenu"   value="{{ user.revenu }}">
+                    <input type="hidden" name="depenses" value="{{ user.depenses }}">
+                    <input type="hidden" name="epargne"  value="{{ user.epargne }}">
+                    <input type="hidden" name="banque"   value="{{ user.banque or '' }}">
+
+                    <div class="pf-grid">
+                        <div class="pf-group pf-full">
+                            <label class="pf-label" for="projet_nom">Nom de votre projet</label>
+                            <input class="pf-input" type="text" id="projet_nom" name="projet_nom"
+                                   placeholder="Ex : Maison à Balbala, Toyota Land Cruiser…"
+                                   value="{{ projet_perso.nom if projet_perso else '' }}">
+                        </div>
+
+                        <div class="pf-group">
+                            <label class="pf-label" for="projet_prix">Prix total (FDJ) *</label>
+                            <input class="pf-input" type="number" id="projet_prix" name="projet_prix"
+                                   placeholder="Ex : 8000000" min="0" required
+                                   value="{{ projet_perso.prix | int if projet_perso else '' }}">
+                            <div class="pf-hint">En Francs Djiboutiens</div>
+                        </div>
+
+                        <div class="pf-group">
+                            <label class="pf-label" for="projet_type">Type de bien</label>
+                            <select class="pf-select" id="projet_type" name="projet_type">
+                                <option value="immobilier" {% if projet_perso and projet_perso.type == 'immobilier' %}selected{% endif %}>🏠 Immobilier</option>
+                                <option value="terrain"    {% if projet_perso and projet_perso.type == 'terrain'    %}selected{% endif %}>🗺️ Terrain</option>
+                                <option value="auto"       {% if projet_perso and projet_perso.type == 'auto'       %}selected{% endif %}>🚗 Véhicule</option>
+                                <option value="locatif"    {% if projet_perso and projet_perso.type == 'locatif'    %}selected{% endif %}>🏘️ Investissement locatif</option>
+                                <option value="epargne"    {% if projet_perso and projet_perso.type == 'epargne'    %}selected{% endif %}>🏦 Épargne / placement</option>
+                            </select>
+                        </div>
+
+                        <div class="pf-group">
+                            <label class="pf-label" for="projet_duree">Durée souhaitée (ans)</label>
+                            <input class="pf-input" type="number" id="projet_duree" name="projet_duree"
+                                   placeholder="10" min="1" max="30"
+                                   value="{{ projet_perso.duree if projet_perso else 10 }}">
+                        </div>
+
+                        <div class="pf-group">
+                            <label class="pf-label" for="projet_apport">Apport disponible (%)</label>
+                            <input class="pf-input" type="number" id="projet_apport_pct" name="projet_apport"
+                                   placeholder="20" min="0" max="100" step="5"
+                                   value="{{ (projet_perso.apport * 100) | int if projet_perso else 20 }}"
+                                   oninput="updateApportCalc()">
+                            <div class="pf-hint" id="apportCalc">Entrez le prix pour calculer</div>
+                        </div>
+
+                        <!-- Loyer estimé (affiché si type = locatif) -->
+                        <div class="pf-group" id="loyerGroup" style="display:none;">
+                            <label class="pf-label" for="projet_loyer">Loyer estimé (FDJ/mois)</label>
+                            <input class="pf-input" type="number" id="projet_loyer" name="projet_loyer"
+                                   placeholder="Ex : 80000" min="0"
+                                   value="{{ projet_perso.loyer_estime | int if projet_perso and projet_perso.loyer_estime else '' }}">
+                            <div class="pf-hint">Pour calculer le cash-flow locatif</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-analyse"
+                            style="width:100%;padding:18px 32px;display:flex;align-items:center;justify-content:space-between;background:var(--ink);color:var(--white);border:none;border-radius:2px;cursor:pointer;font-family:var(--font-ui);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;transition:background .25s,transform .2s;">
+                        <span>Simuler ce projet</span>
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9h12M10 4l5 5-5 5"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CTA BOTTOM ── -->
+    <div class="coach-cta">
+        <div>
+            <div class="coach-cta-title">Nouvelle simulation ?</div>
+            <div class="coach-cta-sub">Modifiez votre profil et relancez l'analyse</div>
+        </div>
+        <div class="coach-cta-btns">
+            <a href="/dashboard" class="btn-cta-white solid">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M2 7h10M7 2l5 5-5 5"/>
+                </svg>
+                Nouvelle analyse
+            </a>
+            <a href="/" class="btn-cta-white ghost">Accueil</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ── Filtre par type ──────────────────────────────────────────
+function filtrer(type, btn) {
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.opp-card').forEach(card => {
+        if (type === 'tous' || card.dataset.type === type) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// ── Afficher champ loyer si type = locatif ───────────────────
+document.getElementById('projet_type').addEventListener('change', function() {
+    document.getElementById('loyerGroup').style.display =
+        this.value === 'locatif' ? 'block' : 'none';
+});
+
+// ── Calculer apport en FDJ en temps réel ─────────────────────
+function updateApportCalc() {
+    const prix   = parseFloat(document.getElementById('projet_prix').value) || 0;
+    const apport = parseFloat(document.getElementById('projet_apport_pct').value) || 0;
+    const hint   = document.getElementById('apportCalc');
+    if (prix > 0) {
+        const montant = Math.round(prix * apport / 100);
+        hint.textContent = '= ' + montant.toLocaleString('fr-FR') + ' FDJ';
+    } else {
+        hint.textContent = 'Entrez le prix pour calculer';
+    }
+}
+
+document.getElementById('projet_prix').addEventListener('input', updateApportCalc);
+
+// ── Init si projet perso déjà soumis ─────────────────────────
+{% if projet_perso and projet_perso.type == 'locatif' %}
+document.getElementById('loyerGroup').style.display = 'block';
+{% endif %}
+updateApportCalc();
+</script>
+{% endblock %}

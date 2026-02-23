@@ -1,62 +1,1025 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Résultat</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #f4f6f9;
-            padding: 40px;
-        }
+{% extends "base.html" %}
 
-        .card {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+{% block content %}
+<style>
+    /* ─── LAYOUT ─────────────────────────────────────────────── */
+    .result-page {
+        min-height: calc(100vh - var(--nav-h) - 32px);
+        padding: 60px 48px 80px;
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+    }
 
-        .score {
-            font-size: 28px;
-            margin: 20px 0;
-        }
+    /* Ambient glow */
+    .result-page::before {
+        content: '';
+        position: fixed;
+        top: 0; right: 0;
+        width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(15,76,92,.05), transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
 
-        .recommendation {
-            background: #e8f0fe;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
+    /* ─── TOP BAR ────────────────────────────────────────────── */
+    .result-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 48px;
+        animation: fadeUp .5s var(--ease) .1s both;
+        position: relative;
+        z-index: 1;
+    }
 
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            text-decoration: none;
-            color: #2a5298;
-        }
-    </style>
-</head>
-<body>
+    .result-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
 
-<div class="card">
-    <h2>Résultat de l'analyse</h2>
+    .result-breadcrumb a {
+        color: var(--muted);
+        text-decoration: none;
+        transition: color .2s;
+    }
 
-    <p><strong>Banque :</strong> {{ bank }}</p>
-    <p><strong>Taux d'endettement :</strong> {{ debt_ratio }} %</p>
-    <p><strong>Capacité restante :</strong> {{ remaining }}</p>
+    .result-breadcrumb a:hover { color: var(--ink); }
+    .result-breadcrumb span { color: rgba(107,107,107,.35); }
+    .result-breadcrumb strong { color: var(--ink); }
 
-    <div class="score">
-        Score financier : {{ score }} / 100
+    .result-timestamp {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .result-timestamp::before {
+        content: '';
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #4caf92;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* ─── HERO SCORE ─────────────────────────────────────────── */
+    .result-hero {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 32px;
+        margin-bottom: 32px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Score card */
+    .score-card {
+        background: var(--ink);
+        border-radius: 4px;
+        padding: 48px 52px;
+        position: relative;
+        overflow: hidden;
+        animation: fadeUp .6s var(--ease) .2s both;
+    }
+
+    .score-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--gold), var(--teal-light), var(--gold));
+        background-size: 200% 100%;
+        animation: shimmer 3s linear infinite;
+    }
+
+    @keyframes shimmer {
+        from { background-position: 200% center; }
+        to   { background-position: -200% center; }
+    }
+
+    .score-card::after {
+        content: '{{ data.score }}';
+        position: absolute;
+        bottom: -30px; right: -10px;
+        font-family: var(--font-display);
+        font-size: 220px;
+        font-weight: 300;
+        color: rgba(255,255,255,.03);
+        line-height: 1;
+        pointer-events: none;
+        letter-spacing: -.04em;
+    }
+
+    .score-card-eyebrow {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .2em;
+        text-transform: uppercase;
+        color: rgba(253,252,250,.35);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .score-card-eyebrow::before {
+        content: '';
+        width: 20px; height: 1px;
+        background: var(--gold);
+        opacity: .5;
+    }
+
+    .score-display {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+
+    .score-num {
+        font-family: var(--font-display);
+        font-size: 108px;
+        font-weight: 300;
+        line-height: 1;
+        color: var(--white);
+        position: relative;
+        z-index: 1;
+        counter-reset: score;
+        animation: countUp .8s var(--ease) .5s both;
+    }
+
+    @keyframes countUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .score-denom {
+        font-family: var(--font-mono);
+        font-size: 16px;
+        color: rgba(253,252,250,.3);
+        font-weight: 400;
+        letter-spacing: .05em;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Gauge */
+    .score-gauge-wrap {
+        margin: 24px 0 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .score-gauge-track {
+        height: 6px;
+        background: rgba(255,255,255,.08);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .score-gauge-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, var(--gold), var(--teal-light));
+        width: 0%;
+        transition: width 1.4s var(--ease);
+    }
+
+    .score-gauge-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+        font-family: var(--font-mono);
+        font-size: 8px;
+        letter-spacing: .1em;
+        color: rgba(253,252,250,.2);
+    }
+
+    .score-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 2px;
+        padding: 8px 16px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--white);
+        position: relative;
+        z-index: 1;
+        margin-top: 4px;
+    }
+
+    .score-badge-dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    /* ─── PROFIL CARD ────────────────────────────────────────── */
+    .profil-card {
+        background: var(--white);
+        border: 1.5px solid rgba(200,169,110,.2);
+        border-radius: 4px;
+        padding: 36px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        animation: fadeUp .6s var(--ease) .3s both;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profil-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 3px; height: 100%;
+        background: linear-gradient(to bottom, var(--gold), var(--teal));
+    }
+
+    .profil-eyebrow {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 14px;
+    }
+
+    .profil-name {
+        font-family: var(--font-display);
+        font-size: 30px;
+        font-weight: 400;
+        line-height: 1.15;
+        color: var(--ink);
+        margin-bottom: 20px;
+    }
+
+    .profil-divider {
+        height: 1px;
+        background: rgba(200,169,110,.12);
+        margin-bottom: 20px;
+    }
+
+    .profil-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        flex: 1;
+    }
+
+    .profil-meta-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .profil-meta-icon {
+        width: 16px; height: 16px;
+        color: var(--teal);
+        flex-shrink: 0;
+        margin-top: 1px;
+        opacity: .7;
+    }
+
+    .profil-meta-val {
+        font-family: var(--font-ui);
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--muted);
+    }
+
+    .profil-meta-val strong {
+        color: var(--ink);
+        font-weight: 600;
+        display: block;
+        font-size: 11px;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        margin-bottom: 1px;
+    }
+
+    /* ─── CONSEIL ────────────────────────────────────────────── */
+    .conseil-section {
+        margin-bottom: 32px;
+        animation: fadeUp .6s var(--ease) .35s both;
+        position: relative;
+        z-index: 1;
+    }
+
+    .conseil-card {
+        background: var(--white);
+        border: 1.5px solid rgba(200,169,110,.18);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .conseil-header {
+        padding: 22px 32px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 1px solid rgba(200,169,110,.12);
+        background: var(--surface);
+    }
+
+    .conseil-ai-chip {
+        font-family: var(--font-mono);
+        font-size: 8px;
+        font-weight: 500;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        background: var(--ink);
+        color: var(--gold);
+        padding: 4px 12px;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .conseil-ai-chip::before {
+        content: '';
+        width: 5px; height: 5px;
+        border-radius: 50%;
+        background: var(--gold);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .conseil-header-title {
+        font-family: var(--font-ui);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .conseil-body {
+        padding: 36px 40px;
+    }
+
+    .conseil-quote {
+        font-family: var(--font-display);
+        font-size: 22px;
+        font-weight: 300;
+        line-height: 1.65;
+        color: var(--ink);
+        border-left: 3px solid var(--gold);
+        padding-left: 28px;
+        margin-bottom: 28px;
+    }
+
+    /* Action items */
+    .conseil-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+        background: rgba(200,169,110,.1);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .conseil-action {
+        background: var(--surface);
+        padding: 20px;
+        transition: background .2s var(--ease);
+    }
+
+    .conseil-action:hover { background: var(--surface-2); }
+
+    .conseil-action-num {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .14em;
+        color: var(--gold);
+        margin-bottom: 8px;
+    }
+
+    .conseil-action-text {
+        font-family: var(--font-ui);
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--ink);
+    }
+
+    /* ─── METRICS ROW ────────────────────────────────────────── */
+    .metrics-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2px;
+        background: rgba(200,169,110,.12);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 32px;
+        animation: fadeUp .6s var(--ease) .4s both;
+        position: relative;
+        z-index: 1;
+    }
+
+    .metric-box {
+        background: var(--white);
+        padding: 28px 24px;
+        transition: background .2s var(--ease);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .metric-box:hover { background: var(--surface); }
+
+    .metric-box::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 2px;
+        background: var(--teal);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform .3s var(--ease);
+    }
+
+    .metric-box:hover::after { transform: scaleX(1); }
+
+    .metric-box-icon {
+        width: 18px; height: 18px;
+        color: var(--teal);
+        opacity: .6;
+        margin-bottom: 14px;
+    }
+
+    .metric-box-val {
+        font-family: var(--font-display);
+        font-size: 36px;
+        font-weight: 300;
+        color: var(--ink);
+        line-height: 1;
+        margin-bottom: 6px;
+    }
+
+    .metric-box-val span { font-size: 20px; color: var(--gold); }
+
+    .metric-box-lbl {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    .metric-box-trend {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: #4caf92;
+        margin-top: 4px;
+    }
+
+    /* ─── IMPACT SECTION ─────────────────────────────────────── */
+    .impact-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-bottom: 32px;
+        animation: fadeUp .6s var(--ease) .45s both;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Impact donut */
+    .impact-card {
+        background: var(--white);
+        border: 1.5px solid rgba(200,169,110,.18);
+        border-radius: 4px;
+        padding: 36px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .impact-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--teal), var(--gold));
+    }
+
+    .donut-wrap {
+        position: relative;
+        width: 140px; height: 140px;
+        margin: 16px 0 20px;
+    }
+
+    .donut-svg { transform: rotate(-90deg); }
+
+    .donut-track {
+        fill: none;
+        stroke: rgba(200,169,110,.12);
+        stroke-width: 10;
+    }
+
+    .donut-fill {
+        fill: none;
+        stroke: url(#donutGrad);
+        stroke-width: 10;
+        stroke-linecap: round;
+        stroke-dasharray: 339.3;
+        stroke-dashoffset: 339.3;
+        transition: stroke-dashoffset 1.6s var(--ease);
+    }
+
+    .donut-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .donut-pct {
+        font-family: var(--font-display);
+        font-size: 32px;
+        font-weight: 300;
+        line-height: 1;
+        color: var(--ink);
+    }
+
+    .donut-pct-sym {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--gold);
+        font-weight: 500;
+    }
+
+    .impact-label {
+        font-family: var(--font-display);
+        font-size: 22px;
+        font-weight: 400;
+        color: var(--ink);
+        margin-bottom: 8px;
+    }
+
+    .impact-sub {
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--muted);
+    }
+
+    /* ODD pills */
+    .odd-section {
+        background: var(--white);
+        border: 1.5px solid rgba(200,169,110,.18);
+        border-radius: 4px;
+        padding: 36px;
+    }
+
+    .odd-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .odd-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 16px;
+        border-radius: 2px;
+        background: var(--surface);
+        border: 1px solid transparent;
+        transition: border-color .2s, background .2s;
+    }
+
+    .odd-item:hover {
+        border-color: rgba(200,169,110,.2);
+        background: var(--surface-2);
+    }
+
+    .odd-badge {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: .1em;
+        padding: 4px 10px;
+        border-radius: 2px;
+        flex-shrink: 0;
+        min-width: 52px;
+        text-align: center;
+    }
+
+    .odd-badge.green  { background: rgba(76,175,146,.15); color: #2e8a6a; border: 1px solid rgba(76,175,146,.3); }
+    .odd-badge.blue   { background: rgba(15,76,92,.1);    color: var(--teal); border: 1px solid rgba(15,76,92,.2); }
+    .odd-badge.gold   { background: rgba(200,169,110,.15);color: #8a6a1e; border: 1px solid rgba(200,169,110,.3); }
+
+    .odd-desc {
+        font-family: var(--font-ui);
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--muted);
+    }
+
+    .odd-desc strong { color: var(--ink); font-weight: 600; }
+
+    /* ─── CTA BOTTOM ─────────────────────────────────────────── */
+    .result-cta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 36px 40px;
+        background: var(--ink);
+        border-radius: 4px;
+        animation: fadeUp .6s var(--ease) .5s both;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .result-cta::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--gold), var(--teal));
+    }
+
+    .result-cta-left {
+        position: relative;
+        z-index: 1;
+    }
+
+    .result-cta-title {
+        font-family: var(--font-display);
+        font-size: 28px;
+        font-weight: 300;
+        font-style: italic;
+        color: var(--white);
+        line-height: 1.2;
+        margin-bottom: 6px;
+    }
+
+    .result-cta-sub {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: rgba(253,252,250,.35);
+    }
+
+    .result-cta-actions {
+        display: flex;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+        flex-shrink: 0;
+    }
+
+    .btn-white-sm {
+        font-family: var(--font-ui);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        text-decoration: none;
+        padding: 14px 28px;
+        border-radius: 2px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all .25s var(--ease);
+    }
+
+    .btn-white-sm.solid {
+        background: var(--white);
+        color: var(--ink);
+    }
+
+    .btn-white-sm.solid:hover {
+        background: var(--gold);
+        color: var(--white);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 28px rgba(0,0,0,.2);
+    }
+
+    .btn-white-sm.outline {
+        background: transparent;
+        color: rgba(253,252,250,.6);
+        border: 1.5px solid rgba(255,255,255,.12);
+    }
+
+    .btn-white-sm.outline:hover {
+        color: var(--white);
+        border-color: rgba(255,255,255,.4);
+    }
+
+    /* ─── ANIMATIONS ─────────────────────────────────────────── */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(18px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+        0%,100% { opacity:1; transform:scale(1); }
+        50%      { opacity:.4; transform:scale(.7); }
+    }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+        .result-hero        { grid-template-columns: 1fr; }
+        .conseil-actions    { grid-template-columns: 1fr; }
+        .metrics-row        { grid-template-columns: repeat(2, 1fr); }
+        .impact-section     { grid-template-columns: 1fr; }
+        .result-cta         { flex-direction: column; gap: 24px; align-items: flex-start; }
+    }
+
+    @media (max-width: 640px) {
+        .result-page        { padding: 40px 20px 60px; }
+        .score-num          { font-size: 80px; }
+        .metrics-row        { grid-template-columns: 1fr 1fr; }
+        .result-cta-actions { flex-direction: column; width: 100%; }
+        .btn-white-sm       { justify-content: center; }
+    }
+</style>
+
+<div class="result-page">
+
+    <!-- Top bar -->
+    <div class="result-topbar">
+        <div class="result-breadcrumb">
+            <a href="/">Accueil</a>
+            <span>/</span>
+            <a href="/dashboard">Simulation</a>
+            <span>/</span>
+            <strong>Résultat</strong>
+        </div>
+        <div class="result-timestamp">Analyse générée maintenant</div>
     </div>
 
-    <div class="recommendation">
-        {{ recommendation }}
+    <!-- ── HERO ── -->
+    <div class="result-hero">
+
+        <!-- Score -->
+        <div class="score-card">
+            <div class="score-card-eyebrow">Score d'inclusion financière</div>
+
+            <div class="score-display">
+                <div class="score-num" id="scoreNum">{{ data.score }}</div>
+                <div class="score-denom">/ 1000</div>
+            </div>
+
+            <div class="score-gauge-wrap">
+                <div class="score-gauge-track">
+                    <div class="score-gauge-fill" id="scoreFill"></div>
+                </div>
+                <div class="score-gauge-labels">
+                    <span>0</span><span>250</span><span>500</span><span>750</span><span>1000</span>
+                </div>
+            </div>
+
+            {% set score = data.score | int %}
+            {% if score >= 800 %}
+                <div class="score-badge">
+                    <span class="score-badge-dot" style="background:#4caf92;"></span>
+                    Excellent profil d'inclusion
+                </div>
+            {% elif score >= 600 %}
+                <div class="score-badge">
+                    <span class="score-badge-dot" style="background:var(--gold);"></span>
+                    Bon potentiel financier
+                </div>
+            {% elif score >= 400 %}
+                <div class="score-badge">
+                    <span class="score-badge-dot" style="background:#e8a84a;"></span>
+                    Profil à développer
+                </div>
+            {% else %}
+                <div class="score-badge">
+                    <span class="score-badge-dot" style="background:#e05c5c;"></span>
+                    Accompagnement recommandé
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Profil -->
+        <div class="profil-card">
+            <div class="profil-eyebrow">Profil détecté</div>
+            <div class="profil-name">{{ data.profil }}</div>
+            <div class="profil-divider"></div>
+
+            <div class="profil-meta">
+                <div class="profil-meta-row">
+                    <svg class="profil-meta-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="8" cy="5" r="3"/>
+                        <path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/>
+                    </svg>
+                    <div class="profil-meta-val">
+                        <strong>Catégorie</strong>
+                        Épargnant actif · Économie locale
+                    </div>
+                </div>
+                <div class="profil-meta-row">
+                    <svg class="profil-meta-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M8 2 L8 8 L12 10"/>
+                        <circle cx="8" cy="8" r="6"/>
+                    </svg>
+                    <div class="profil-meta-val">
+                        <strong>Horizon recommandé</strong>
+                        Moyen terme · 12 à 36 mois
+                    </div>
+                </div>
+                <div class="profil-meta-row">
+                    <svg class="profil-meta-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M3 13 L6 9 L9 11 L13 5"/>
+                    </svg>
+                    <div class="profil-meta-val">
+                        <strong>Produits adaptés</strong>
+                        Microcrédit, épargne progressive, IMF
+                    </div>
+                </div>
+                <div class="profil-meta-row">
+                    <svg class="profil-meta-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M8 1v14M3 5h10M3 11h10"/>
+                    </svg>
+                    <div class="profil-meta-val">
+                        <strong>Impact estimé</strong>
+                        {{ data.impact }}% de retour social
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <a href="/simulation">Faire une nouvelle simulation</a>
+    <!-- ── METRICS ── -->
+    <div class="metrics-row">
+        <div class="metric-box">
+            <svg class="metric-box-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 15 L7 9 L11 11 L15 4"/>
+            </svg>
+            <div class="metric-box-val">{{ data.score }}<span>/1000</span></div>
+            <div class="metric-box-lbl">Score IA</div>
+            <div class="metric-box-trend">↑ Évaluation complète</div>
+        </div>
+        <div class="metric-box">
+            <svg class="metric-box-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 2 C5 2 2 5 2 9 S5 16 9 16 S16 13 16 9 S13 2 9 2"/>
+                <path d="M9 6v3l3 2"/>
+            </svg>
+            <div class="metric-box-val">{{ data.impact }}<span>%</span></div>
+            <div class="metric-box-lbl">Impact durable</div>
+            <div class="metric-box-trend">↑ Au-dessus de la moyenne</div>
+        </div>
+        <div class="metric-box">
+            <svg class="metric-box-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="5" width="14" height="10" rx="1"/>
+                <path d="M6 5V3h6v2"/>
+            </svg>
+            <div class="metric-box-val">A<span>+</span></div>
+            <div class="metric-box-lbl">Éligibilité crédit</div>
+            <div class="metric-box-trend">↑ Accès recommandé</div>
+        </div>
+        <div class="metric-box">
+            <svg class="metric-box-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polygon points="9,2 11,7 17,7 12,11 14,17 9,13 4,17 6,11 1,7 7,7"/>
+            </svg>
+            <div class="metric-box-val">ODD<span> 8</span></div>
+            <div class="metric-box-lbl">Alignement principal</div>
+            <div class="metric-box-trend">+ ODD 1, 10</div>
+        </div>
+    </div>
+
+    <!-- ── CONSEIL IA ── -->
+    <div class="conseil-section">
+        <div class="conseil-card">
+            <div class="conseil-header">
+                <div class="conseil-ai-chip">IA · Analyse</div>
+                <div class="conseil-header-title">Recommandation personnalisée</div>
+            </div>
+            <div class="conseil-body">
+                <p class="conseil-quote">{{ data.conseil }}</p>
+
+                <div class="conseil-actions">
+                    <div class="conseil-action">
+                        <div class="conseil-action-num">Priorité 01</div>
+                        <div class="conseil-action-text">Ouvrir un compte épargne progressif dans une IMF partenaire locale pour sécuriser votre base financière.</div>
+                    </div>
+                    <div class="conseil-action">
+                        <div class="conseil-action-num">Priorité 02</div>
+                        <div class="conseil-action-text">Simuler un plan de microcrédit sur 12 mois en adéquation avec votre capacité de remboursement détectée.</div>
+                    </div>
+                    <div class="conseil-action">
+                        <div class="conseil-action-num">Priorité 03</div>
+                        <div class="conseil-action-text">Explorer les produits d'investissement à impact alignés sur les ODD disponibles dans votre région.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── IMPACT + ODD ── -->
+    <div class="impact-section">
+
+        <!-- Donut -->
+        <div class="impact-card">
+            <div class="profil-eyebrow">Impact durable estimé</div>
+
+            <div class="donut-wrap">
+                <svg class="donut-svg" width="140" height="140" viewBox="0 0 140 140">
+                    <defs>
+                        <linearGradient id="donutGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#c8a96e"/>
+                            <stop offset="100%" stop-color="#1a6b80"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="donut-track" cx="70" cy="70" r="54"/>
+                    <circle class="donut-fill" id="donutFill" cx="70" cy="70" r="54"/>
+                </svg>
+                <div class="donut-center">
+                    <span class="donut-pct">{{ data.impact }}<span class="donut-pct-sym">%</span></span>
+                </div>
+            </div>
+
+            <div class="impact-label">Retour social projeté</div>
+            <p class="impact-sub">Basé sur 47 indicateurs contextuels et les standards IRIS+ de mesure d'impact social.</p>
+        </div>
+
+        <!-- ODD -->
+        <div class="odd-section">
+            <div class="profil-eyebrow">Alignement ODD · Agenda 2030</div>
+            <div class="odd-list">
+                <div class="odd-item">
+                    <span class="odd-badge green">ODD 1</span>
+                    <div class="odd-desc"><strong>Fin de la pauvreté</strong> — Votre profil contribue à réduire les exclusions financières.</div>
+                </div>
+                <div class="odd-item">
+                    <span class="odd-badge blue">ODD 8</span>
+                    <div class="odd-desc"><strong>Travail décent</strong> — Accès au crédit productif favorisant l'entrepreneuriat local.</div>
+                </div>
+                <div class="odd-item">
+                    <span class="odd-badge gold">ODD 10</span>
+                    <div class="odd-desc"><strong>Réduction des inégalités</strong> — Score d'équité algorithmique : 94/100.</div>
+                </div>
+                <div class="odd-item">
+                    <span class="odd-badge blue">ODD 17</span>
+                    <div class="odd-desc"><strong>Partenariats</strong> — Éligible aux programmes d'IMF certifiées localement.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CTA ── -->
+    <div class="result-cta">
+        <div class="result-cta-left">
+            <div class="result-cta-title">Prêt à passer à l'action ?</div>
+            <div class="result-cta-sub">Utilisez votre score pour accéder aux offres partenaires</div>
+        </div>
+        <div class="result-cta-actions">
+            <a href="/dashboard" class="btn-white-sm solid">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M2 7h10M7 2l5 5-5 5"/>
+                </svg>
+                Nouvelle analyse
+            </a>
+            <a href="/" class="btn-white-sm outline">Accueil</a>
+        </div>
+    </div>
+
 </div>
 
-</body>
-</html>
+<script>
+    // ── Animate gauge fill ────────────────────────────────────
+    const score = {{ data.score | int }};
+    const pct   = Math.min(score / 10, 100);
+
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            document.getElementById('scoreFill').style.width = pct + '%';
+        }, 300);
+
+        // Donut
+        const impact  = {{ data.impact | float }};
+        const circumf = 339.3;
+        const offset  = circumf * (1 - impact / 100);
+        setTimeout(() => {
+            document.getElementById('donutFill').style.strokeDashoffset = offset;
+        }, 500);
+    });
+</script>
+
+{% endblock %}

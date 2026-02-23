@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FICHE A — Le Problème</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0a0e1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .slide {
+    width: 960px;
+    min-height: 540px;
+    background: linear-gradient(135deg, #0d1225 0%, #111827 60%, #0d1a2e 100%);
+    border: 1px solid rgba(99,179,237,0.15);
+    border-radius: 16px;
+    padding: 48px 56px 36px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  /* Decorative accent */
+  .slide::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .slide::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: 20%;
+    width: 400px; height: 200px;
+    background: radial-gradient(ellipse, rgba(99,102,241,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Tag */
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #38bdf8;
+    border: 1px solid rgba(56,189,248,0.35);
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+
+  /* Title */
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: #f1f5f9;
+    line-height: 1.25;
+    max-width: 640px;
+    margin-bottom: 32px;
+    position: relative;
+  }
+  h1 span { color: #38bdf8; }
+
+  /* Divider */
+  .divider {
+    width: 48px;
+    height: 2px;
+    background: linear-gradient(90deg, #38bdf8, transparent);
+    margin-bottom: 28px;
+  }
+
+  /* Main grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+
+  .card-label {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #38bdf8;
+    margin-bottom: 10px;
+  }
+
+  .card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .card ul li {
+    font-size: 12.5px;
+    color: #94a3b8;
+    line-height: 1.5;
+    padding-left: 14px;
+    position: relative;
+  }
+
+  .card ul li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: #38bdf8;
+    font-weight: 700;
+  }
+
+  /* Consequence row */
+  .consequences {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+
+  .cons-label {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #64748b;
+    white-space: nowrap;
+    margin-right: 4px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: #fca5a5;
+    font-weight: 400;
+  }
+
+  .arrow {
+    color: #374151;
+    font-size: 14px;
+  }
+
+  /* Solution card */
+  .solution-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .card.question .card-label { color: #a78bfa; }
+  .card.question .q-text {
+    font-size: 12.5px;
+    color: #c4b5fd;
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  .card.solution .card-label { color: #34d399; }
+  .card.solution ul li::before { color: #34d399; }
+  .card.solution ul li { color: #94a3b8; }
+
+  /* Bottom key phrase */
+  .key-phrase {
+    background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(99,102,241,0.06));
+    border: 1px solid rgba(56,189,248,0.2);
+    border-left: 3px solid #38bdf8;
+    border-radius: 8px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .key-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .key-phrase p {
+    font-size: 13px;
+    color: #e2e8f0;
+    line-height: 1.5;
+  }
+
+  .key-phrase strong {
+    color: #38bdf8;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="tag">Fiche A — Problème</div>
+
+  <h1>Prendre une décision financière reste<br>aujourd'hui <span>un pari risqué.</span></h1>
+
+  <div class="divider"></div>
+
+  <!-- Constat + Solution -->
+  <div class="grid">
+    <div class="card">
+      <div class="card-label">Le Constat</div>
+      <ul>
+        <li>La majorité des personnes n'a pas de conseiller financier</li>
+        <li>Les décisions d'achat (maison, voiture, terrain) sont prises sans projection future</li>
+        <li>Les simulateurs calculent une capacité d'achat, mais n'analysent pas le risque réel</li>
+        <li>Les données bancaires sont souvent limitées ou indisponibles</li>
+      </ul>
+    </div>
+
+    <div class="card solution">
+      <div class="card-label">Notre Solution</div>
+      <ul>
+        <li>Analyse de la stabilité financière</li>
+        <li>Simulation de l'avenir économique de l'utilisateur</li>
+        <li>Explication claire des risques</li>
+        <li>Recommandations responsables adaptées au contexte local</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Consequences -->
+  <div class="consequences">
+    <span class="cons-label">Conséquences →</span>
+    <span class="badge">Endettement prématuré</span>
+    <span class="arrow">→</span>
+    <span class="badge">Opportunités manquées</span>
+    <span class="arrow">→</span>
+    <span class="badge">Mauvaise planification</span>
+  </div>
+
+  <!-- Question -->
+  <div class="solution-row">
+    <div class="card question" style="grid-column: 1 / -1;">
+      <div class="card-label">Notre Question de Départ</div>
+      <p class="q-text">Comment permettre à une personne, avec seulement quelques données simples, de savoir si une décision financière est sûre avant de la prendre ?</p>
+    </div>
+  </div>
+
+  <!-- Key phrase -->
+  <div class="key-phrase">
+    <span class="key-icon">💡</span>
+    <p>Nous ne disons pas à l'utilisateur quoi acheter. <strong>Nous lui montrons quand une décision devient réellement sûre.</strong></p>
+  </div>
+
+</div>
+</body>
+</html>
